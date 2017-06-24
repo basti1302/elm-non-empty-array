@@ -11,7 +11,7 @@ import Test exposing (..)
 suite : Test
 suite =
     describe "The non empty array module"
-        [ describe "array creation"
+        [ describe "singleton (array creation)"
             [ test "created as a singleton, it has length 1" <|
                 \_ ->
                     let
@@ -19,18 +19,65 @@ suite =
                             NEA.singleton "a"
                     in
                     Expect.equal 1 (NEA.length nea)
-            , test "created from an empty array, it is Nothing" <|
+            ]
+        , describe "repeat (array creation)"
+            [ fuzz (intRange 3 100) "repeat" <|
+                \howMany ->
+                    let
+                        nea =
+                            NEA.repeat howMany "Yo!"
+                    in
+                    expectAll
+                        [ Expect.equal howMany (NEA.length nea)
+                        , Expect.equal (Just "Yo!") (NEA.get 0 nea)
+                        , Expect.equal (Just "Yo!") (NEA.get 1 nea)
+                        , Expect.equal (Just "Yo!") (NEA.get 2 nea)
+                        , Expect.equal Nothing (NEA.get howMany nea)
+                        ]
+            , fuzz (intRange -100 1) "repeat negative times or zero" <|
+                \howMany ->
+                    let
+                        nea =
+                            NEA.repeat howMany "Nope"
+                    in
+                    expectAll
+                        [ Expect.equal 1 (NEA.length nea)
+                        , Expect.equal (Just "Nope") (NEA.get 0 nea)
+                        , Expect.equal Nothing (NEA.get 1 nea)
+                        ]
+            ]
+        , describe "initialize (array creation)"
+            [ fuzz (intRange 3 100) "initialize" <|
+                \howMany ->
+                    let
+                        nea =
+                            NEA.initialize howMany toString
+                    in
+                    expectAll
+                        [ Expect.equal howMany (NEA.length nea)
+                        , Expect.equal (Just "0") (NEA.get 0 nea)
+                        , Expect.equal (Just "1") (NEA.get 1 nea)
+                        , Expect.equal (Just "2") (NEA.get 2 nea)
+                        , Expect.equal Nothing (NEA.get howMany nea)
+                        ]
+            , fuzz (intRange -100 1) "initialize with negative or zero number" <|
+                \howMany ->
+                    let
+                        nea =
+                            NEA.initialize howMany toString
+                    in
+                    expectAll
+                        [ Expect.equal 1 (NEA.length nea)
+                        , Expect.equal (Just "0") (NEA.get 0 nea)
+                        , Expect.equal Nothing (NEA.get 1 nea)
+                        ]
+            ]
+        , describe "fromArray (array creation)"
+            [ test "created from an empty array, it is Nothing" <|
                 \_ ->
                     let
                         mnea =
                             NEA.fromArray Array.empty
-                    in
-                    Expect.equal Nothing mnea
-            , test "created from an empty list, it is Nothing" <|
-                \_ ->
-                    let
-                        mnea =
-                            NEA.fromList []
                     in
                     Expect.equal Nothing mnea
             , test "created from a non empty array, it is Just" <|
@@ -40,14 +87,6 @@ suite =
                             [ 1, 2, 3 ]
                                 |> Array.fromList
                                 |> NEA.fromArray
-                    in
-                    expectJust mnea
-            , test "created from a non empty list, it is Just" <|
-                \_ ->
-                    let
-                        mnea =
-                            [ 1, 2, 3 ]
-                                |> NEA.fromList
                     in
                     expectJust mnea
             , fuzz (intRange 1 1000) "created from an array, it has the same length" <|
@@ -60,6 +99,23 @@ suite =
                     expectMaybe
                         (\nea -> Expect.equal num (NEA.length nea))
                         mnea
+            ]
+        , describe "fromList (array creation)"
+            [ test "created from an empty list, it is Nothing" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList []
+                    in
+                    Expect.equal Nothing mnea
+            , test "created from a non empty list, it is Just" <|
+                \_ ->
+                    let
+                        mnea =
+                            [ 1, 2, 3 ]
+                                |> NEA.fromList
+                    in
+                    expectJust mnea
             ]
         , describe "push"
             [ test "push to singleton" <|
@@ -354,8 +410,6 @@ suite =
 -- slice
 -- foldl
 -- foldr
--- repeat
--- initialize
 -- Use same order of functions as Array.Hamt
 -- Use same docs as Array.Hamt
 -- currentIndex feature

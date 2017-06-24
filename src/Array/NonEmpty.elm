@@ -7,9 +7,11 @@ module Array.NonEmpty
         , fromList
         , get
         , getFirst
+        , initialize
         , length
         , map
         , push
+        , repeat
         , set
         , singleton
         )
@@ -24,6 +26,24 @@ type NonEmptyArray a
 singleton : a -> NonEmptyArray a
 singleton first =
     NEA first Array.empty
+
+
+{-| When the requested number of elements is smaller than one (0 or negative),
+this function will still return a non empty array with one element.
+-}
+repeat : Int -> a -> NonEmptyArray a
+repeat howMany element =
+    NEA element (Array.repeat (howMany - 1) element)
+
+
+initialize : Int -> (Int -> a) -> NonEmptyArray a
+initialize howMany generator =
+    NEA
+        (generator 0)
+        (Array.initialize
+            (howMany - 1)
+            ((+) 1 >> generator)
+        )
 
 
 fromArray : Array a -> Maybe (NonEmptyArray a)
