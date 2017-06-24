@@ -9,6 +9,8 @@ module Array.NonEmpty
         , getFirst
         , length
         , map
+        , push
+        , set
         , singleton
         )
 
@@ -48,6 +50,11 @@ fromList =
     Array.fromList >> fromArray
 
 
+push : a -> NonEmptyArray a -> NonEmptyArray a
+push element (NEA first rest) =
+    NEA first (Array.push element rest)
+
+
 append : NonEmptyArray a -> NonEmptyArray a -> NonEmptyArray a
 append (NEA first1 rest1) (NEA first2 rest2) =
     let
@@ -70,6 +77,14 @@ get index (NEA first rest) =
 getFirst : NonEmptyArray a -> a
 getFirst (NEA first rest) =
     first
+
+
+set : Int -> a -> NonEmptyArray a -> NonEmptyArray a
+set index element (NEA first rest) =
+    if index == 0 then
+        NEA element rest
+    else
+        NEA first (Array.set (index - 1) element rest)
 
 
 length : NonEmptyArray a -> Int

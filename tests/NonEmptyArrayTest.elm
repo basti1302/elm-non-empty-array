@@ -61,6 +61,38 @@ suite =
                         (\nea -> Expect.equal num (NEA.length nea))
                         mnea
             ]
+        , describe "push"
+            [ test "push to singleton" <|
+                \_ ->
+                    let
+                        nea =
+                            NEA.singleton "a"
+                                |> NEA.push "b"
+                    in
+                    expectAll
+                        [ Expect.equal (Just "a") (NEA.get 0 nea)
+                        , Expect.equal (Just "b") (NEA.get 1 nea)
+                        , Expect.equal Nothing (NEA.get 2 nea)
+                        ]
+            ]
+        , test "push to array with multiple elements" <|
+            \_ ->
+                let
+                    mnea =
+                        NEA.fromList [ "a", "b", "c" ]
+                            |> Maybe.map (NEA.push "d")
+                in
+                expectMaybe
+                    (\nea ->
+                        expectAll
+                            [ Expect.equal (Just "a") (NEA.get 0 nea)
+                            , Expect.equal (Just "b") (NEA.get 1 nea)
+                            , Expect.equal (Just "c") (NEA.get 2 nea)
+                            , Expect.equal (Just "d") (NEA.get 3 nea)
+                            , Expect.equal Nothing (NEA.get 4 nea)
+                            ]
+                    )
+                    mnea
         , describe "append"
             [ test "append two single element arrays" <|
                 \_ ->
@@ -158,6 +190,90 @@ suite =
                         )
                         maybeResult
             ]
+        , describe "getFirst"
+            [ test "get the first element via getFirst" <|
+                \_ ->
+                    let
+                        nea =
+                            NEA.singleton "element"
+                    in
+                    Expect.equal "element" (NEA.getFirst nea)
+            , test "getFirst from array with multiple elements" <|
+                \_ ->
+                    let
+                        firstElem =
+                            NEA.fromList [ "a", "b" ]
+                                |> Maybe.map NEA.getFirst
+                    in
+                    expectMaybe
+                        (Expect.equal "a")
+                        firstElem
+            ]
+        , describe "get"
+            [ test "get the first element" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ "a", "b" ]
+
+                        elemNegativeIndex =
+                            Maybe.andThen (NEA.get -1) mnea
+
+                        elem0 =
+                            Maybe.andThen (NEA.get 0) mnea
+
+                        elem1 =
+                            Maybe.andThen (NEA.get 1) mnea
+
+                        elem2 =
+                            Maybe.andThen (NEA.get 2) mnea
+                    in
+                    expectAll
+                        [ Expect.equal Nothing elemNegativeIndex
+                        , Expect.equal (Just "a") elem0
+                        , Expect.equal (Just "b") elem1
+                        , Expect.equal Nothing elem2
+                        ]
+            ]
+        , describe "set"
+            [ test "set element at index in range" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ "a", "b", "c" ]
+                                |> Maybe.map (NEA.set 1 "X")
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal (Just "a") (NEA.get 0 nea)
+                                , Expect.equal (Just "X") (NEA.get 1 nea)
+                                , Expect.equal (Just "c") (NEA.get 2 nea)
+                                , Expect.equal Nothing (NEA.get 3 nea)
+                                ]
+                        )
+                        mnea
+            , test "set element at negative index" <|
+                \_ ->
+                    let
+                        original =
+                            NEA.fromList [ "a", "b", "c" ]
+
+                        updated =
+                            Maybe.map (NEA.set -42 "X") original
+                    in
+                    Expect.equal original updated
+            , test "set element at too large index" <|
+                \_ ->
+                    let
+                        original =
+                            NEA.fromList [ "a", "b", "c" ]
+
+                        updated =
+                            Maybe.map (NEA.set 42 "X") original
+                    in
+                    Expect.equal original updated
+            ]
         , describe "map"
             [ test "mapping over a single element" <|
                 \_ ->
@@ -210,24 +326,40 @@ suite =
                                 |> Maybe.andThen (NEA.filter isEven)
                     in
                     expectJust mnea
+            , test "filter keeps the order" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5, 6, 7 ]
+                                |> Maybe.andThen (NEA.filter isEven)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal (Just 0) (NEA.get 0 nea)
+                                , Expect.equal (Just 2) (NEA.get 1 nea)
+                                , Expect.equal (Just 4) (NEA.get 2 nea)
+                                , Expect.equal (Just 6) (NEA.get 3 nea)
+                                , Expect.equal Nothing (NEA.get 4 nea)
+                                ]
+                        )
+                        mnea
             ]
         ]
 
 
 
--- Test the resulting order of filter
--- Test append, especially the resulting order
--- Use same order of functions as Array.Hamt
--- Use same docs as Array.Hamt
--- push
--- append
--- get
--- set
 -- toList
 -- toIndexedList
+-- slice
+-- foldl
+-- foldr
+-- repeat
+-- initialize
+-- Use same order of functions as Array.Hamt
+-- Use same docs as Array.Hamt
+-- currentIndex feature
 -- check AnimalActionSet which functions are provided there
--- Foldl
--- Foldr
 
 
 expectJust : Maybe (NonEmptyArray a) -> Expectation
@@ -241,16 +373,16 @@ expectJust maybe =
 
 
 expectMaybe :
-    (NonEmptyArray a -> Expectation)
-    -> Maybe (NonEmptyArray a)
+    (a -> Expectation)
+    -> Maybe a
     -> Expectation
 expectMaybe expectation maybe =
     case maybe of
-        Just nea ->
-            expectation nea
+        Just something ->
+            expectation something
 
         Nothing ->
-            Expect.fail "Expected a Just _, got a Nothing"
+            Expect.fail "Expected a Just, got a Nothing"
 
 
 expectAll : List Expectation -> Expectation
