@@ -3,6 +3,8 @@ module Array.NonEmpty
         ( NonEmptyArray
         , append
         , filter
+        , foldl
+        , foldr
         , fromArray
         , fromList
         , get
@@ -14,6 +16,7 @@ module Array.NonEmpty
         , repeat
         , set
         , singleton
+        , toArray
         , toIndexedList
         , toList
         )
@@ -109,6 +112,13 @@ set index element (NEA first rest) =
         NEA first (Array.set (index - 1) element rest)
 
 
+toArray : NonEmptyArray a -> Array a
+toArray (NEA first rest) =
+    Array.append
+        (Array.repeat 1 first)
+        rest
+
+
 toList : NonEmptyArray a -> List a
 toList (NEA first rest) =
     first :: Array.toList rest
@@ -161,3 +171,21 @@ filter function (NEA first rest) =
         Just (NEA first filteredRest)
     else
         fromArray filteredRest
+
+
+foldl : (a -> b -> b) -> b -> NonEmptyArray a -> b
+foldl f init (NEA first rest) =
+    let
+        init2 =
+            f first init
+    in
+    Array.foldl f init2 rest
+
+
+foldr : (a -> b -> b) -> b -> NonEmptyArray a -> b
+foldr f init nea =
+    let
+        array =
+            toArray nea
+    in
+    Array.foldr f init array

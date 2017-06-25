@@ -3,7 +3,7 @@ module NonEmptyArrayTest exposing (..)
 import Array.Hamt as Array exposing (Array)
 import Array.NonEmpty as NEA exposing (NonEmptyArray)
 import Expect exposing (Expectation)
-import Fuzz exposing (..)
+import Fuzz exposing (Fuzzer)
 import Random
 import Test exposing (..)
 
@@ -21,7 +21,7 @@ suite =
                     Expect.equal 1 (NEA.length nea)
             ]
         , describe "repeat (array creation)"
-            [ fuzz (intRange 3 100) "repeat" <|
+            [ fuzz (Fuzz.intRange 3 100) "repeat" <|
                 \howMany ->
                     let
                         nea =
@@ -34,7 +34,7 @@ suite =
                         , Expect.equal (Just "Yo!") (NEA.get 2 nea)
                         , Expect.equal Nothing (NEA.get howMany nea)
                         ]
-            , fuzz (intRange -100 1) "repeat negative times or zero" <|
+            , fuzz (Fuzz.intRange -100 1) "repeat negative times or zero" <|
                 \howMany ->
                     let
                         nea =
@@ -47,7 +47,7 @@ suite =
                         ]
             ]
         , describe "initialize (array creation)"
-            [ fuzz (intRange 3 100) "initialize" <|
+            [ fuzz (Fuzz.intRange 3 100) "initialize" <|
                 \howMany ->
                     let
                         nea =
@@ -60,7 +60,7 @@ suite =
                         , Expect.equal (Just "2") (NEA.get 2 nea)
                         , Expect.equal Nothing (NEA.get howMany nea)
                         ]
-            , fuzz (intRange -100 1) "initialize with negative or zero number" <|
+            , fuzz (Fuzz.intRange -100 1) "initialize with negative or zero number" <|
                 \howMany ->
                     let
                         nea =
@@ -89,7 +89,7 @@ suite =
                                 |> NEA.fromArray
                     in
                     expectJust mnea
-            , fuzz (intRange 1 1000) "created from an array, it has the same length" <|
+            , fuzz (Fuzz.intRange 1 1000) "created from an array, it has the same length" <|
                 \num ->
                     let
                         mnea =
@@ -331,7 +331,7 @@ suite =
                     Expect.equal original updated
             ]
         , describe "toList"
-            [ fuzz nonEmptyListFuzzer "toList produces a list" <|
+            [ fuzz nonEmptyIntList "toList produces a list" <|
                 \randomList ->
                     let
                         maybeList =
@@ -408,7 +408,7 @@ suite =
                                 |> Maybe.andThen (NEA.filter isEven)
                     in
                     Expect.equal Nothing mnea
-            , fuzz listFuzzer "filter to > 0 elements returns Just" <|
+            , fuzz intList "filter to > 0 elements returns Just" <|
                 \randomList ->
                     let
                         mnea =
@@ -438,19 +438,59 @@ suite =
                         )
                         mnea
             ]
+        , describe "foldl"
+            [ test "foldl singleton" <|
+                \_ ->
+                    let
+                        nea =
+                            NEA.singleton "Hello"
+                    in
+                    Expect.equal "HelloWorld" (NEA.foldl (++) "World" nea)
+            , fuzz nonEmptyStringList "foldl array with multiple elements" <|
+                \randomList ->
+                    let
+                        foldedViaNea =
+                            randomList
+                                |> NEA.fromList
+                                |> Maybe.map (NEA.foldl (++) "x")
+
+                        foldedViaList =
+                            randomList
+                                |> List.foldl (++) "x"
+                    in
+                    expectMaybe
+                        (\nea ->
+                            Expect.equal foldedViaList nea
+                        )
+                        foldedViaNea
+            ]
+        , describe "foldr"
+            [ test "foldr singleton" <|
+                \_ ->
+                    let
+                        nea =
+                            NEA.singleton "Hello"
+                    in
+                    Expect.equal "HelloWorld" (NEA.foldr (++) "World" nea)
+            , fuzz nonEmptyStringList "foldr array with multiple elements" <|
+                \randomList ->
+                    let
+                        foldedViaNea =
+                            randomList
+                                |> NEA.fromList
+                                |> Maybe.map (NEA.foldr (++) "x")
+
+                        foldedViaList =
+                            randomList
+                                |> List.foldr (++) "x"
+                    in
+                    expectMaybe
+                        (\nea ->
+                            Expect.equal foldedViaList nea
+                        )
+                        foldedViaNea
+            ]
         ]
-
-
-
--- toList
--- toIndexedList
--- slice
--- foldl
--- foldr
--- Use same order of functions as Array.Hamt
--- Use same docs as Array.Hamt
--- currentIndex feature
--- check AnimalActionSet which functions are provided there
 
 
 expectJust : Maybe (NonEmptyArray a) -> Expectation
@@ -489,17 +529,29 @@ expectAll expectations =
     Expect.all functions ()
 
 
-listFuzzer : Fuzzer (List Int)
-listFuzzer =
-    list (intRange 0 1000)
+intList : Fuzzer (List Int)
+intList =
+    Fuzz.list (Fuzz.intRange 0 1000)
 
 
-nonEmptyListFuzzer : Fuzzer (List Int)
-nonEmptyListFuzzer =
-    listFuzzer
-        |> conditional
+nonEmptyIntList : Fuzzer (List Int)
+nonEmptyIntList =
+    intList
+        |> Fuzz.conditional
             { retries = 10
             , fallback = \_ -> [ 42 ]
+            , condition = List.isEmpty >> not
+            }
+
+
+nonEmptyStringList : Fuzzer (List String)
+nonEmptyStringList =
+    Fuzz.intRange 0 1000
+        |> Fuzz.map toString
+        |> Fuzz.list
+        |> Fuzz.conditional
+            { retries = 10
+            , fallback = \_ -> [ "42" ]
             , condition = List.isEmpty >> not
             }
 
@@ -507,3 +559,12 @@ nonEmptyListFuzzer =
 isEven : Int -> Bool
 isEven x =
     x % 2 == 0
+
+
+
+-- test toArray
+-- slice
+-- Use same order of functions as Array.Hamt
+-- Use same docs as Array.Hamt
+-- currentIndex feature
+-- check AnimalActionSet which functions are provided there
