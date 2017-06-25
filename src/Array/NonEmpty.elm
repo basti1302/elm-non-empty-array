@@ -14,6 +14,8 @@ module Array.NonEmpty
         , repeat
         , set
         , singleton
+        , toIndexedList
+        , toList
         )
 
 import Array.Hamt as Array exposing (Array)
@@ -105,6 +107,26 @@ set index element (NEA first rest) =
         NEA element rest
     else
         NEA first (Array.set (index - 1) element rest)
+
+
+toList : NonEmptyArray a -> List a
+toList (NEA first rest) =
+    first :: Array.toList rest
+
+
+toIndexedList : NonEmptyArray a -> List ( Int, a )
+toIndexedList (NEA first rest) =
+    let
+        indexedList =
+            Array.toIndexedList rest
+
+        fixIndex ( index, element ) =
+            ( index + 1, element )
+
+        fixedIndexes =
+            List.map fixIndex indexedList
+    in
+    ( 0, first ) :: fixedIndexes
 
 
 length : NonEmptyArray a -> Int

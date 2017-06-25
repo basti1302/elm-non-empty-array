@@ -330,6 +330,46 @@ suite =
                     in
                     Expect.equal original updated
             ]
+        , describe "toList"
+            [ fuzz nonEmptyListFuzzer "toList produces a list" <|
+                \randomList ->
+                    let
+                        maybeList =
+                            NEA.fromList randomList
+                                |> Maybe.map NEA.toList
+                    in
+                    expectMaybe (Expect.equal randomList) maybeList
+            ]
+        , describe "toIndexedList"
+            [ test "toIndexedList for singleton" <|
+                \_ ->
+                    let
+                        indexedSingletonList =
+                            NEA.singleton ()
+                                |> NEA.toIndexedList
+                    in
+                    Expect.equal (Just ( 0, () )) (List.head indexedSingletonList)
+            , test "toIndexedList produces correct indexes" <|
+                \_ ->
+                    let
+                        listOfNumbers =
+                            List.range 0 30
+
+                        maybeIndexedList =
+                            NEA.fromList listOfNumbers
+                                |> Maybe.map NEA.toIndexedList
+                    in
+                    expectMaybe
+                        (\indexedList ->
+                            indexedList
+                                |> List.map
+                                    (\( index, element ) ->
+                                        Expect.equal index element
+                                    )
+                                |> expectAll
+                        )
+                        maybeIndexedList
+            ]
         , describe "map"
             [ test "mapping over a single element" <|
                 \_ ->
@@ -368,10 +408,7 @@ suite =
                                 |> Maybe.andThen (NEA.filter isEven)
                     in
                     Expect.equal Nothing mnea
-            , fuzz
-                (list (intRange 0 1000))
-                "filter to > 0 elements returns Just"
-              <|
+            , fuzz listFuzzer "filter to > 0 elements returns Just" <|
                 \randomList ->
                     let
                         mnea =
@@ -450,6 +487,21 @@ expectAll expectations =
             List.map (\exp -> \subj -> exp) expectations
     in
     Expect.all functions ()
+
+
+listFuzzer : Fuzzer (List Int)
+listFuzzer =
+    list (intRange 0 1000)
+
+
+nonEmptyListFuzzer : Fuzzer (List Int)
+nonEmptyListFuzzer =
+    listFuzzer
+        |> conditional
+            { retries = 10
+            , fallback = \_ -> [ 42 ]
+            , condition = List.isEmpty >> not
+            }
 
 
 isEven : Int -> Bool
