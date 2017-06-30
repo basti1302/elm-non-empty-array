@@ -1,7 +1,15 @@
 # Array.NonEmpty for Elm
 [![Build Status](https://travis-ci.org/basti1302/elm-non-empty-array.svg?branch=master)](https://travis-ci.org/basti1302/elm-non-empty-array)
 
-An array that has always at least one element.
+An array that always contains at least one element.
+
+The implementation uses
+<http://package.elm-lang.org/packages/Skinney/elm-array-exploration/latest>
+internally (which will be the default Array implementation in Elm core from version 0.19 on). For Elm 0.18, `Skinney/elm-array-exploration` is the only dependency besides `elm-lang/core`. For Elm 0.19, `elm-lang/core` will be the only dependency.
+
+Inspired by
+<http://package.elm-lang.org/packages/mgold/elm-nonempty-list/latest>.
+
 
 ````elm
 import Array.NonEmpty as NEA exposing (NonEmptyArray)

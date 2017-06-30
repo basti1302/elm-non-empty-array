@@ -22,15 +22,7 @@ module Array.NonEmpty
         , toList
         )
 
-{-| An array that has always at least one element. This makes it possible to not
-return a Maybe in a few places where Array must return Maybes.
-
-The implementation is based on
-<http://package.elm-lang.org/packages/Skinney/elm-array-exploration/latest>
-(which will the default Array implementation in Elm core in version 0.19).
-
-Inspired by
-<http://package.elm-lang.org/packages/mgold/elm-nonempty-list/latest>.
+{-| An array that always contains at least one element.
 
 
 # Non Empty Array
@@ -81,7 +73,7 @@ length (NEA first rest) =
     Array.length rest + 1
 
 
-{-| Creates a new non empty array with a single element.
+{-| Creates a new, non empty array with a single element.
 -}
 fromElement : a -> NonEmptyArray a
 fromElement first =
@@ -170,7 +162,7 @@ fromList =
     Array.fromList >> fromArray
 
 
-{-| Return `Just` the element at the index or `Nothing`` if the index is out of
+{-| Return `Just` the element at the index or `Nothing` if the index is out of
 range.
 
     get  0 (initialize 3 identity) --> Just 0
