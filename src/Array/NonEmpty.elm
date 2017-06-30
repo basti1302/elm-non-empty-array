@@ -16,6 +16,7 @@ module Array.NonEmpty
         , repeat
         , set
         , singleton
+        , slice
         , toArray
         , toIndexedList
         , toList
@@ -110,6 +111,100 @@ set index element (NEA first rest) =
         NEA element rest
     else
         NEA first (Array.set (index - 1) element rest)
+
+
+slice : Int -> Int -> NonEmptyArray a -> Maybe (NonEmptyArray a)
+slice startIndex endIndex nea =
+    let
+        (NEA first rest) =
+            nea
+
+        l =
+            length nea
+
+        s =
+            normalizeSliceIndex startIndex nea
+
+        e =
+            normalizeSliceIndex endIndex nea
+    in
+    -- We mimick the constraints used by Elm's core array (as of 0.19, that is,
+    -- Array.Hamt for 0.18):
+    -- start >= end    => empty array
+    -- start >= length => empty array
+    -- end = start + n for n >= 1 => n elements, starting at start
+    if s >= e then
+        Nothing
+    else if s >= l then
+        Nothing
+    else
+        -- At this point, the following conditions are true:
+        -- * 0 <= s < length
+        -- * 0 <= e <= length
+        -- * e > s
+        -- This means that the returned slice will have at least one element.
+        let
+            -- let's try to find the first element of the new NEA:
+            newFirst =
+                if s == 0 then
+                    -- This is the easy case, for s == 0 the slice's first
+                    -- element is the current first element.
+                    first
+                else
+                    -- otherwise, we need to fetch the slice's first element
+                    -- from the rest array. We know that the element at the
+                    -- given index exists (due to the conditions mentioned
+                    -- above), but we need to unwrap the Maybe returned by
+                    -- Array.get.
+                    let
+                        maybeNewFirst =
+                            Array.get (s - 1) rest
+                    in
+                    case maybeNewFirst of
+                        Just elem ->
+                            elem
+
+                        Nothing ->
+                            -- This really should never happen, see above.
+                            Debug.crash "Expected an element but there is none."
+
+            newRest =
+                if e > s + 1 then
+                    Array.slice s (e - 1) rest
+                else
+                    Array.empty
+        in
+        Just (NEA newFirst newRest)
+
+
+{-| Normalizes an index given to slice.
+
+If the given index is greater than the length of the array, it is normalized to
+the length.
+
+If the given index is negative, it is interpreted as an index from the rightside
+of the array, that is, as (length - index). If this also results in a
+negative index (that is, if (Basics.abs index > length)), then it is normalized
+to 0.
+
+-}
+normalizeSliceIndex : Int -> NonEmptyArray a -> Int
+normalizeSliceIndex index nea =
+    let
+        l =
+            length nea
+
+        fromRight =
+            l + index
+    in
+    if index < 0 && fromRight < 0 then
+        0
+    else if index < 0 then
+        fromRight
+    else if index > l then
+        l
+    else
+        index
 
 
 toArray : NonEmptyArray a -> Array a

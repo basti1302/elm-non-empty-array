@@ -330,6 +330,226 @@ suite =
                     in
                     Expect.equal original updated
             ]
+        , describe "slice"
+            [ fuzz sliceFuzzer1 "start == end -> Nothing" <|
+                \( randomList, index ) ->
+                    let
+                        mnea =
+                            NEA.fromList randomList
+                                |> Maybe.andThen (NEA.slice index index)
+                    in
+                    Expect.equal Nothing mnea
+            , fuzz (Fuzz.intRange 1 4) "start > end -> Nothing" <|
+                \start ->
+                    let
+                        end =
+                            start - 1
+
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3 ]
+                                |> Maybe.andThen (NEA.slice start end)
+                    in
+                    Expect.equal Nothing mnea
+            , fuzz (Fuzz.intRange 0 3) "slice to one element" <|
+                \start ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3 ]
+                                |> Maybe.andThen (NEA.slice start (start + 1))
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal 1 (NEA.length nea)
+                                , Expect.equal start (NEA.getFirst nea)
+                                ]
+                        )
+                        mnea
+            , fuzz (Fuzz.intRange -100 -4)
+                "slice to first element with out of bounds start index"
+              <|
+                \start ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3 ]
+                                |> Maybe.andThen (NEA.slice start 1)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal 1 (NEA.length nea)
+                                , Expect.equal 0 (NEA.getFirst nea)
+                                ]
+                        )
+                        mnea
+            , fuzz (Fuzz.intRange 4 100)
+                "slice to last element with out of bounds end index"
+              <|
+                \end ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3 ]
+                                |> Maybe.andThen (NEA.slice 3 end)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal 1 (NEA.length nea)
+                                , Expect.equal 3 (NEA.getFirst nea)
+                                ]
+                        )
+                        mnea
+            , fuzz (Fuzz.intRange -4 -1) "slice to one element from right" <|
+                \start ->
+                    let
+                        end =
+                            if start == -1 then
+                                -- slice -1 0 is (correctly) the empty array,
+                                -- for this case we need slice -1 4
+                                4
+                            else
+                                start + 1
+
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3 ]
+                                |> Maybe.andThen (NEA.slice start end)
+
+                        expectedElement =
+                            start + 4
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal 1 (NEA.length nea)
+                                , Expect.equal expectedElement
+                                    (NEA.getFirst nea)
+                                ]
+                        )
+                        mnea
+            , test "slice to more elements not including first" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5, 6 ]
+                                |> Maybe.andThen (NEA.slice 1 6)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal (Just 1) (NEA.get 0 nea)
+                                , Expect.equal (Just 2) (NEA.get 1 nea)
+                                , Expect.equal (Just 3) (NEA.get 2 nea)
+                                , Expect.equal (Just 4) (NEA.get 3 nea)
+                                , Expect.equal (Just 5) (NEA.get 4 nea)
+                                , Expect.equal Nothing (NEA.get 5 nea)
+                                , Expect.equal 5 (NEA.length nea)
+                                ]
+                        )
+                        mnea
+            , fuzz (Fuzz.intRange 7 100)
+                "slice to more elements not including first with end out of bounds"
+              <|
+                \end ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5, 6 ]
+                                |> Maybe.andThen (NEA.slice 1 end)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal (Just 1) (NEA.get 0 nea)
+                                , Expect.equal (Just 2) (NEA.get 1 nea)
+                                , Expect.equal (Just 3) (NEA.get 2 nea)
+                                , Expect.equal (Just 4) (NEA.get 3 nea)
+                                , Expect.equal (Just 5) (NEA.get 4 nea)
+                                , Expect.equal (Just 6) (NEA.get 5 nea)
+                                , Expect.equal Nothing (NEA.get 6 nea)
+                                , Expect.equal 6 (NEA.length nea)
+                                ]
+                        )
+                        mnea
+            , test "slice to more elements including first" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5, 6 ]
+                                |> Maybe.andThen (NEA.slice 0 6)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal (Just 0) (NEA.get 0 nea)
+                                , Expect.equal (Just 1) (NEA.get 1 nea)
+                                , Expect.equal (Just 2) (NEA.get 2 nea)
+                                , Expect.equal (Just 3) (NEA.get 3 nea)
+                                , Expect.equal (Just 4) (NEA.get 4 nea)
+                                , Expect.equal (Just 5) (NEA.get 5 nea)
+                                , Expect.equal Nothing (NEA.get 6 nea)
+                                , Expect.equal 6 (NEA.length nea)
+                                ]
+                        )
+                        mnea
+            , fuzz (Fuzz.intRange -100 -7) "slice to more elements including first with start out of bounds" <|
+                \start ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5, 6 ]
+                                |> Maybe.andThen (NEA.slice start 6)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal (Just 0) (NEA.get 0 nea)
+                                , Expect.equal (Just 1) (NEA.get 1 nea)
+                                , Expect.equal (Just 2) (NEA.get 2 nea)
+                                , Expect.equal (Just 3) (NEA.get 3 nea)
+                                , Expect.equal (Just 4) (NEA.get 4 nea)
+                                , Expect.equal (Just 5) (NEA.get 5 nea)
+                                , Expect.equal Nothing (NEA.get 6 nea)
+                                , Expect.equal 6 (NEA.length nea)
+                                ]
+                        )
+                        mnea
+            , fuzz
+                (Fuzz.map2 (,)
+                    (Fuzz.intRange -7 -5)
+                    (Fuzz.intRange -4 -1)
+                )
+                "slice to more elements from the right"
+              <|
+                \( start, end ) ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5, 6 ]
+                                |> Maybe.andThen (NEA.slice start end)
+
+                        expectedLength =
+                            end - start
+
+                        expectedFirstElem =
+                            start + 7
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal expectedLength (NEA.length nea)
+                                , Expect.equal expectedFirstElem
+                                    (NEA.getFirst nea)
+                                ]
+                        )
+                        mnea
+            ]
+        , describe "toArray"
+            [ fuzz nonEmptyIntArray "toArray produces an array" <|
+                \randomArray ->
+                    let
+                        maybeArray =
+                            NEA.fromArray randomArray
+                                |> Maybe.map NEA.toArray
+                    in
+                    expectMaybe (Expect.equal randomArray) maybeArray
+            ]
         , describe "toList"
             [ fuzz nonEmptyIntList "toList produces a list" <|
                 \randomList ->
@@ -529,6 +749,11 @@ expectAll expectations =
     Expect.all functions ()
 
 
+isEven : Int -> Bool
+isEven x =
+    x % 2 == 0
+
+
 intList : Fuzzer (List Int)
 intList =
     Fuzz.list (Fuzz.intRange 0 1000)
@@ -556,15 +781,39 @@ nonEmptyStringList =
             }
 
 
-isEven : Int -> Bool
-isEven x =
-    x % 2 == 0
+nonEmptyIntArray : Fuzzer (Array Int)
+nonEmptyIntArray =
+    nonEmptyIntList
+        |> Fuzz.map Array.fromList
+
+
+{-| Generates a list of random length >= 1 and an index >= 0 and < length.
+-}
+sliceFuzzer1 : Fuzzer ( List Int, Int )
+sliceFuzzer1 =
+    let
+        listFuzzer =
+            nonEmptyIntList
+    in
+    listFuzzer
+        |> Fuzz.andThen
+            (\randomList ->
+                let
+                    maxIndex =
+                        List.length randomList - 1
+
+                    indexFuzzer =
+                        Fuzz.intRange 0 maxIndex
+                in
+                Fuzz.map2 (,) listFuzzer indexFuzzer
+            )
 
 
 
--- test toArray
--- slice
+-- TODO:
 -- Use same order of functions as Array.Hamt
 -- Use same docs as Array.Hamt
 -- currentIndex feature
 -- check AnimalActionSet which functions are provided there
+-- README
+-- publish
