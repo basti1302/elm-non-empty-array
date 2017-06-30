@@ -807,19 +807,3 @@ sliceFuzzer1 =
                 in
                 Fuzz.map2 (,) listFuzzer indexFuzzer
             )
-
-
-
--- TODO:
--- Set up travis.
--- Use initialize/repeat more often and avoid fromList in docs examples (to avoid Maybe)
--- indexedMap
--- set up doc tests
--- getSafe, rolling the index around
--- toString
--- Use same order of functions as Array.Hamt
--- Use same docs as Array.Hamt
--- currentIndex feature
--- check AnimalActionSet which functions are provided there
--- README
--- publish
