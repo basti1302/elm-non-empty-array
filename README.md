@@ -3,12 +3,15 @@
 
 An array that always contains at least one element.
 
-The implementation uses
-<http://package.elm-lang.org/packages/Skinney/elm-array-exploration/latest>
-internally (which will be the default Array implementation in Elm core from version 0.19 on). For Elm 0.18, `Skinney/elm-array-exploration` is the only dependency besides `elm-lang/core`. For Elm 0.19, `elm-lang/core` will be the only dependency.
+Additionaly, it can track a currently selected index, which is guaranteed to
+point to an existing element in the array.
 
-Inspired by
-<http://package.elm-lang.org/packages/mgold/elm-nonempty-list/latest>.
+These additional constraints enables two functions, namely `getFirst` and
+`getSelected` to return a value directly instead of a `Maybe`.
+
+The implementation uses [Skinney/elm-array-exploration](http://package.elm-lang.org/packages/Skinney/elm-array-exploration/latest) internally (which will be the default Array implementation in Elm core from version 0.19 on). For Elm 0.18, `Skinney/elm-array-exploration` is the only dependency besides `elm-lang/core`. For Elm 0.19, `elm-lang/core` will be the only dependency.
+
+Inspired by [mgold/elm-nonempty-list](http://package.elm-lang.org/packages/mgold/elm-nonempty-list/latest).
 
 
 ````elm
@@ -27,9 +30,10 @@ createdFromList = NEA.fromList ["a", "b", "b"]
 
 All functions from core `Array` are available, with the exception of `isEmpty` (which would be an alias for `True`).
 
-In addition, non-empty-array offers an additional function made possible due to the additional constraints:
+In addition, non-empty-array offer additional functions made possible due to the additional constraints:
 
 * `getFirst`: Returns the first element. Since it is known that this element exists, this function does not return a Maybe but the actual element type.
+* `getSelected`: Returns the element at the currently selected index. Since it is known that this element exists, this function does not return a Maybe but the actual element type.
 
 
 ## Tests
@@ -51,7 +55,8 @@ This will require downloading some packages on the first run.
 
 ## Version History
 
-* 1.0.0 - 2017-06-30: Initial version.
+* 1.1.0 - 2017-06-30: Selected index feature
+* 1.0.0 - 2017-06-30: Initial version
 
 ## License
 

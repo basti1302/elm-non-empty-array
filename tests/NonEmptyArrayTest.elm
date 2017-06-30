@@ -19,6 +19,13 @@ suite =
                             NEA.fromElement "a"
                     in
                     Expect.equal 1 (NEA.length nea)
+            , test "created as a singleton, it has selected index 0" <|
+                \_ ->
+                    let
+                        nea =
+                            NEA.fromElement "a"
+                    in
+                    Expect.equal 0 (NEA.selectedIndex nea)
             ]
         , describe "repeat (array creation)"
             [ fuzz (Fuzz.intRange 3 100) "repeat" <|
@@ -33,6 +40,7 @@ suite =
                         , Expect.equal (Just "Yo!") (NEA.get 1 nea)
                         , Expect.equal (Just "Yo!") (NEA.get 2 nea)
                         , Expect.equal Nothing (NEA.get howMany nea)
+                        , Expect.equal 0 (NEA.selectedIndex nea)
                         ]
             , fuzz (Fuzz.intRange -100 1) "repeat negative times or zero" <|
                 \howMany ->
@@ -44,6 +52,7 @@ suite =
                         [ Expect.equal 1 (NEA.length nea)
                         , Expect.equal (Just "Nope") (NEA.get 0 nea)
                         , Expect.equal Nothing (NEA.get 1 nea)
+                        , Expect.equal 0 (NEA.selectedIndex nea)
                         ]
             ]
         , describe "initialize (array creation)"
@@ -59,6 +68,7 @@ suite =
                         , Expect.equal (Just "1") (NEA.get 1 nea)
                         , Expect.equal (Just "2") (NEA.get 2 nea)
                         , Expect.equal Nothing (NEA.get howMany nea)
+                        , Expect.equal 0 (NEA.selectedIndex nea)
                         ]
             , fuzz (Fuzz.intRange -100 1) "initialize with negative or zero number" <|
                 \howMany ->
@@ -70,6 +80,7 @@ suite =
                         [ Expect.equal 1 (NEA.length nea)
                         , Expect.equal (Just "0") (NEA.get 0 nea)
                         , Expect.equal Nothing (NEA.get 1 nea)
+                        , Expect.equal 0 (NEA.selectedIndex nea)
                         ]
             ]
         , describe "fromArray (array creation)"
@@ -89,6 +100,19 @@ suite =
                                 |> NEA.fromArray
                     in
                     expectJust mnea
+            , test "created from a non empty array, it has selected index 0" <|
+                \_ ->
+                    let
+                        mnea =
+                            [ 1, 2, 3 ]
+                                |> Array.fromList
+                                |> NEA.fromArray
+                    in
+                    expectMaybe
+                        (\nea ->
+                            Expect.equal 0 (NEA.selectedIndex nea)
+                        )
+                        mnea
             , fuzz (Fuzz.intRange 1 1000) "created from an array, it has the same length" <|
                 \num ->
                     let
@@ -116,6 +140,18 @@ suite =
                                 |> NEA.fromList
                     in
                     expectJust mnea
+            , test "created from a non empty list, it has selected index 0" <|
+                \_ ->
+                    let
+                        mnea =
+                            [ 1, 2, 3 ]
+                                |> NEA.fromList
+                    in
+                    expectMaybe
+                        (\nea ->
+                            Expect.equal 0 (NEA.selectedIndex nea)
+                        )
+                        mnea
             ]
         , describe "toString"
             [ test "render to string" <|
@@ -124,7 +160,15 @@ suite =
                         nea =
                             NEA.initialize 3 identity
                     in
-                    Expect.equal "NonEmptyArray [0,1,2]" (NEA.toString nea)
+                    Expect.equal "NonEmptyArray [0,1,2] (0)" (NEA.toString nea)
+            , test "render to string with different selected index" <|
+                \_ ->
+                    let
+                        nea =
+                            NEA.repeat 3 0
+                                |> NEA.setSelectedIndex 1
+                    in
+                    Expect.equal "NonEmptyArray [0,0,0] (1)" (NEA.toString nea)
             ]
         , describe "push"
             [ test "push to singleton" <|
@@ -138,6 +182,7 @@ suite =
                         [ Expect.equal (Just "a") (NEA.get 0 nea)
                         , Expect.equal (Just "b") (NEA.get 1 nea)
                         , Expect.equal Nothing (NEA.get 2 nea)
+                        , Expect.equal 0 (NEA.selectedIndex nea)
                         ]
             ]
         , test "push to array with multiple elements" <|
@@ -155,6 +200,7 @@ suite =
                             , Expect.equal (Just "c") (NEA.get 2 nea)
                             , Expect.equal (Just "d") (NEA.get 3 nea)
                             , Expect.equal Nothing (NEA.get 4 nea)
+                            , Expect.equal 0 (NEA.selectedIndex nea)
                             ]
                     )
                     mnea
@@ -254,6 +300,21 @@ suite =
                                 ]
                         )
                         maybeResult
+            , fuzz (Fuzz.intRange 0 9) "result of append uses selected index of first param" <|
+                \idx ->
+                    let
+                        nea1 =
+                            NEA.repeat 10 "a"
+                                |> NEA.setSelectedIndex idx
+
+                        nea2 =
+                            NEA.repeat 10 "b"
+                                |> NEA.setSelectedIndex (10 - idx - 1)
+
+                        result =
+                            NEA.append nea1 nea2
+                    in
+                    Expect.equal idx (NEA.selectedIndex result)
             ]
         , describe "getFirst"
             [ test "get the first element via getFirst" <|
@@ -273,6 +334,69 @@ suite =
                     expectMaybe
                         (Expect.equal "a")
                         firstElem
+            ]
+        , describe "getSelected"
+            [ test "get the selected element" <|
+                \_ ->
+                    let
+                        nea =
+                            NEA.fromElement "element"
+                    in
+                    Expect.equal "element" (NEA.getSelected nea)
+            , fuzz
+                (Fuzz.map2 (,)
+                    (Fuzz.intRange 1 100)
+                    (Fuzz.intRange 1 100)
+                )
+                "get the selected element from array with multiple elements"
+              <|
+                \( int1, int2 ) ->
+                    let
+                        -- use the larger random int as the array size, the
+                        -- smaller as the selected index
+                        ( size, selectedIdx ) =
+                            if int1 > int2 then
+                                ( int1, int2 )
+                            else if int2 > int1 then
+                                ( int2, int1 )
+                            else
+                                ( int1, int1 - 1 )
+
+                        nea =
+                            NEA.initialize size identity
+                                |> NEA.setSelectedIndex selectedIdx
+                    in
+                    Expect.equal selectedIdx (NEA.getSelected nea)
+            ]
+        , describe "setSelectedIndex"
+            [ fuzz
+                (Fuzz.map2 (,)
+                    (Fuzz.intRange 0 20)
+                    (Fuzz.intRange 20 100)
+                )
+                "too large selected index is rejected"
+              <|
+                \( size, selectedIdx ) ->
+                    let
+                        nea =
+                            NEA.initialize size identity
+                                |> NEA.setSelectedIndex selectedIdx
+                    in
+                    Expect.equal 0 (NEA.selectedIndex nea)
+            , fuzz
+                (Fuzz.map2 (,)
+                    (Fuzz.intRange 0 20)
+                    (Fuzz.intRange -100 -1)
+                )
+                "too low selected index is rejected"
+              <|
+                \( size, selectedIdx ) ->
+                    let
+                        nea =
+                            NEA.initialize size identity
+                                |> NEA.setSelectedIndex selectedIdx
+                    in
+                    Expect.equal 0 (NEA.selectedIndex nea)
             ]
         , describe "get"
             [ test "get the first element" <|
