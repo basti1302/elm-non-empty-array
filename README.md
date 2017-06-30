@@ -13,7 +13,6 @@ The implementation uses [Skinney/elm-array-exploration](http://package.elm-lang.
 
 Inspired by [mgold/elm-nonempty-list](http://package.elm-lang.org/packages/mgold/elm-nonempty-list/latest).
 
-
 ````elm
 import Array.NonEmpty as NEA exposing (NonEmptyArray)
 
