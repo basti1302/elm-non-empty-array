@@ -117,6 +117,15 @@ suite =
                     in
                     expectJust mnea
             ]
+        , describe "toString"
+            [ test "render to string" <|
+                \_ ->
+                    let
+                        nea =
+                            NEA.initialize 3 identity
+                    in
+                    Expect.equal "NonEmptyArray [0,1,2]" (NEA.toString nea)
+            ]
         , describe "push"
             [ test "push to singleton" <|
                 \_ ->
@@ -599,7 +608,7 @@ suite =
                                 |> NEA.map (\x -> x * 2)
                     in
                     Expect.equal 10 (NEA.getFirst nea)
-            , test "mapping over a multiple elements" <|
+            , test "mapping over multiple elements" <|
                 \_ ->
                     let
                         mnea =
@@ -618,6 +627,22 @@ suite =
                                 ]
                         )
                         mnea
+            ]
+        , describe "indexedMap"
+            [ test "indexedMap over multiple elements" <|
+                \_ ->
+                    let
+                        nea =
+                            NEA.initialize 3 identity
+                                |> NEA.indexedMap (,)
+                    in
+                    expectAll
+                        [ Expect.equal 3 (NEA.length nea)
+                        , Expect.equal (Just ( 0, 0 )) (NEA.get 0 nea)
+                        , Expect.equal (Just ( 1, 1 )) (NEA.get 1 nea)
+                        , Expect.equal (Just ( 2, 2 )) (NEA.get 2 nea)
+                        , Expect.equal Nothing (NEA.get 3 nea)
+                        ]
             ]
         , describe "filter"
             [ test "filter to zero elements returns Nothing" <|

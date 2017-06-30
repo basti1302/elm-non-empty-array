@@ -1,7 +1,3 @@
-* Set up travis.
-* Functions from core array that need to be implemented:
-    * indexedMap
-    * toString
 * Additional functions that make sense given the at-least-one-elem constraint:
     * getSafe, rolling the index around
 * currentIndex feature

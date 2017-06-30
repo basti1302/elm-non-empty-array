@@ -10,6 +10,7 @@ module Array.NonEmpty
         , fromList
         , get
         , getFirst
+        , indexedMap
         , initialize
         , length
         , map
@@ -20,6 +21,7 @@ module Array.NonEmpty
         , toArray
         , toIndexedList
         , toList
+        , toString
         )
 
 {-| An array that always contains at least one element.
@@ -52,7 +54,12 @@ module Array.NonEmpty
 
 # Transform
 
-@docs foldl, foldr, filter, map
+@docs foldl, foldr, filter, map, indexedMap
+
+
+# Display
+
+@docs toString
 
 -}
 
@@ -160,6 +167,25 @@ list, converted to a `NonEmptyArray`.
 fromList : List a -> Maybe (NonEmptyArray a)
 fromList =
     Array.fromList >> fromArray
+
+
+{-| Return a representation of the NonEmptyArray as a string.
+
+    import Array.NonEmpty as NEA
+
+    NEA.toString <| (initialize 3 identity) --> "NonEmptyArray [0,1,2]"
+
+-}
+toString : NonEmptyArray a -> String
+toString nea =
+    let
+        content =
+            nea
+                |> map Basics.toString
+                |> toList
+                |> String.join ","
+    in
+    "NonEmptyArray [" ++ content ++ "]"
 
 
 {-| Return `Just` the element at the index or `Nothing` if the index is out of
@@ -329,7 +355,7 @@ filter function (NEA first rest) =
 
 {-| Apply a function to every element in an array.
 
-    map toString (repeat 5 1) --> repeat 5 "1"
+    map Basics.toString (repeat 5 1) --> repeat 5 "1"
 
 -}
 map : (a -> b) -> NonEmptyArray a -> NonEmptyArray b
@@ -340,6 +366,27 @@ map function (NEA first rest) =
 
         newRest =
             Array.map function rest
+    in
+    NEA newFirst newRest
+
+
+{-| Apply a function to every element with its index as first argument.
+
+    Just (indexedMap (*) (repeat 5 2)) --> fromList [0, 2, 4, 6, 8]
+
+-}
+indexedMap : (Int -> a -> b) -> NonEmptyArray a -> NonEmptyArray b
+indexedMap function (NEA first rest) =
+    let
+        newFirst =
+            function 0 first
+
+        newRest =
+            Array.indexedMap
+                (\idx ->
+                    function (idx + 1)
+                )
+                rest
     in
     NEA newFirst newRest
 
