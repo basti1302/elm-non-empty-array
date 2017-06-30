@@ -94,10 +94,13 @@ the element at index `i` initialized to the result of `(f i)`.
 When the requested number of elements is smaller than one (0 or negative), the
 returned array will still contain one element, `f 0`.
 
-    Just (initialize 4 identity)    == fromList [0, 1, 2, 3]
-    Just (initialize 4 (\n -> n*n)) == fromList [0, 1, 4, 9]
-    Just (initialize 4 (always 0))  == fromList [0, 0, 0, 0]
-    Just (initialize 0 identity)  == fromList [0]
+    Just (initialize 4 identity)    --> fromList [0, 1, 2, 3]
+
+    Just (initialize 4 (\n -> n*n)) --> fromList [0, 1, 4, 9]
+
+    Just (initialize 4 (always 0))  --> fromList [0, 0, 0, 0]
+
+    Just (initialize 0 identity)  --> fromList [0]
 
 -}
 initialize : Int -> (Int -> a) -> NonEmptyArray a
@@ -115,9 +118,11 @@ initialize howMany generator =
 When the requested number of elements is smaller than one (0 or negative),
 this function will still return a non empty array with one element.
 
-    Just (repeat 5 0)     == fromList [0, 0, 0, 0, 0]
-    Just (repeat 3 "cat") == fromList ["cat", "cat", "cat"]
-    Just (repeat 0 "frog") == fromList ["frog"]
+    Just (repeat 5 0)     --> fromList [0, 0, 0, 0, 0]
+
+    Just (repeat 3 "cat") --> fromList ["cat", "cat", "cat"]
+
+    Just (repeat 0 "frog") --> fromList ["frog"]
 
 Notice that `repeat 3 x` is the same as `initialize 3 (always x)`.
 
@@ -168,12 +173,13 @@ fromList =
 {-| Return `Just` the element at the index or `Nothing`` if the index is out of
 range.
 
-Given a NonEmptyArray `nea` with contents [0, 1, 2]:
+    get  0 (initialize 3 identity) --> Just 0
 
-    get  0 nea == Just 0
-    get  2 nea == Just 2
-    get  5 nea == Nothing
-    get -1 nea == Nothing
+    get  2 (initialize 3 identity) --> Just 2
+
+    get  5 (initialize 3 identity) --> Nothing
+
+    get -1 (initialize 3 identity) -->  Nothing
 
 Notice that in contrast to mgold/elm-nonempty-list, where `head` and `tail` do
 not return Maybes, this function still necessarily returns a Maybe, because the
@@ -191,9 +197,7 @@ get index (NEA first rest) =
 
 {-| Return the first element of a NonEmptyArray.
 
-Given a NonEmptyArray `nea` with contents [0, 1, 2]:
-
-    getFirst nea == 0
+    getFirst (initialize 3 identity) --> 0
 
 -}
 getFirst : NonEmptyArray a -> a
@@ -204,7 +208,7 @@ getFirst (NEA first rest) =
 {-| Set the element at a particular index. Returns an updated array.
 If the index is out of range, the array is unaltered.
 
-    set 0 1302 (fromElement 42) == fromElement 1302
+    set 0 1302 (fromElement 42) --> fromElement 1302
 
 -}
 set : Int -> a -> NonEmptyArray a -> NonEmptyArray a
@@ -217,7 +221,7 @@ set index element (NEA first rest) =
 
 {-| Push an element onto the end of an array.
 
-    Just (push 2 (fromElement 1)) == fromList [1, 2]
+    Just (push 2 (fromElement 1)) --> fromList [1, 2]
 
 -}
 push : a -> NonEmptyArray a -> NonEmptyArray a
@@ -227,7 +231,11 @@ push element (NEA first rest) =
 
 {-| Converts the NonEmptyArray into a standard array.
 
-    fromArray array |> Maybe.map toArray == Just array
+    import Array.Hamt as Array
+
+    fromArray (Array.fromList [1, 2])
+        |> Maybe.map toArray
+    --> Just (Array.fromList [1, 2])
 
 -}
 toArray : NonEmptyArray a -> Array a
@@ -239,7 +247,9 @@ toArray (NEA first rest) =
 
 {-| Create a list of elements from an array.
 
-    fromList [3, 5, 8] |> Maybe.map toList == Just [3, 5, 8]
+    fromList [3, 5, 8]
+        |> Maybe.map toList
+    --> Just [3, 5, 8]
 
 -}
 toList : NonEmptyArray a -> List a
@@ -250,7 +260,9 @@ toList (NEA first rest) =
 {-| Create an indexed list from an array. Each element of the array will be
 paired with its index.
 
-    fromList ["cat","dog"] |> Maybe.map toIndexedList == Just [(0, "cat"), (1, "dog")]
+    fromList ["cat", "dog"]
+        |> Maybe.map toIndexedList
+    --> Just [(0, "cat"), (1, "dog")]
 
 -}
 toIndexedList : NonEmptyArray a -> List ( Int, a )
@@ -270,7 +282,7 @@ toIndexedList (NEA first rest) =
 
 {-| Reduce an array from the right. Read `foldr` as fold from the right.
 
-    foldr (+) 0 (repeat 3 5) == 15
+    foldr (+) 0 (repeat 3 5) --> 15
 
 -}
 foldr : (a -> b -> b) -> b -> NonEmptyArray a -> b
@@ -284,7 +296,7 @@ foldr f init nea =
 
 {-| Reduce an array from the left. Read `foldl` as fold from the left.
 
-    foldl (::) [] (initialize 3 identity) == [2, 1, 0]
+    foldl (::) [] (initialize 3 identity) --> [2, 1, 0]
 
 -}
 foldl : (a -> b -> b) -> b -> NonEmptyArray a -> b
@@ -299,7 +311,11 @@ foldl f init (NEA first rest) =
 {-| Keep only elements that satisfy the predicate. If no elements remain,
 Nothing is returned, otherwise Just the array of remaining elements.
 
-    filter isEven (initialize 3 identity) == (fromList [2])
+    isEven : Int -> Bool
+    isEven n =
+        n % 2 == 0
+
+    filter isEven (initialize 5 identity) --> fromList [0, 2, 4]
 
 -}
 filter : (a -> Bool) -> NonEmptyArray a -> Maybe (NonEmptyArray a)
@@ -321,7 +337,7 @@ filter function (NEA first rest) =
 
 {-| Apply a function to every element in an array.
 
-    map toString (repeat 5 1) == repeat 5 "1"
+    map toString (repeat 5 1) --> repeat 5 "1"
 
 -}
 map : (a -> b) -> NonEmptyArray a -> NonEmptyArray b
@@ -338,7 +354,7 @@ map function (NEA first rest) =
 
 {-| Append two arrays to a new one.
 
-    Just (append (repeat 2 42) (repeat 3 81)) == fromList [42, 42, 81, 81, 81]
+    Just (append (repeat 2 42) (repeat 3 81)) --> fromList [42, 42, 81, 81, 81]
 
 -}
 append : NonEmptyArray a -> NonEmptyArray a -> NonEmptyArray a
@@ -357,15 +373,18 @@ zero-based index where we will start our slice. The `end` is a zero-based index
 that indicates the end of the slice. The slice extracts up to but not including
 `end`. If the resulting slice would be empty, Nothing is returned.
 
-    slice 0 3 (initialize 5 identity) == fromList [0, 1, 2]
-    slice 1 4 (initialize 5 identity) == fromList [1, 2, 3]
-    slice 2 2 (initialize 5 identity) == Nothing
+    slice 0 3 (initialize 5 identity) --> fromList [0, 1, 2]
+
+    slice 1 4 (initialize 5 identity) --> fromList [1, 2, 3]
+
+    slice 2 2 (initialize 5 identity) --> Nothing
 
 Both the `start` and `end` indexes can be negative, indicating an offset from
 the end of the array.
 
-    slice  1 -1 (initialize 5 identity) == fromList [1, 2, 3]
-    slice -2  5 (initialize 5 identity) == fromList [3, 4]
+    slice  1 -1 (initialize 5 identity) --> fromList [1, 2, 3]
+
+    slice -2  5 (initialize 5 identity) --> fromList [3, 4]
 
 This makes it pretty easy to `pop` the last element off of an array:
 `slice 0 -1 array`
