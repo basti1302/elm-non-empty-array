@@ -11,12 +11,12 @@ import Test exposing (..)
 suite : Test
 suite =
     describe "The non empty array module"
-        [ describe "singleton (array creation)"
+        [ describe "fromElement (array creation)"
             [ test "created as a singleton, it has length 1" <|
                 \_ ->
                     let
                         nea =
-                            NEA.singleton "a"
+                            NEA.fromElement "a"
                     in
                     Expect.equal 1 (NEA.length nea)
             ]
@@ -122,7 +122,7 @@ suite =
                 \_ ->
                     let
                         nea =
-                            NEA.singleton "a"
+                            NEA.fromElement "a"
                                 |> NEA.push "b"
                     in
                     expectAll
@@ -154,10 +154,10 @@ suite =
                 \_ ->
                     let
                         nea1 =
-                            NEA.singleton "a"
+                            NEA.fromElement "a"
 
                         nea2 =
-                            NEA.singleton "b"
+                            NEA.fromElement "b"
 
                         result =
                             NEA.append nea1 nea2
@@ -171,7 +171,7 @@ suite =
                 \_ ->
                     let
                         nea1 =
-                            NEA.singleton "a"
+                            NEA.fromElement "a"
 
                         mnea2 =
                             NEA.fromList [ "b", "c", "d" ]
@@ -199,7 +199,7 @@ suite =
                             NEA.fromList [ "a", "b", "c" ]
 
                         nea2 =
-                            NEA.singleton "d"
+                            NEA.fromElement "d"
 
                         maybeResult =
                             Maybe.map
@@ -251,7 +251,7 @@ suite =
                 \_ ->
                     let
                         nea =
-                            NEA.singleton "element"
+                            NEA.fromElement "element"
                     in
                     Expect.equal "element" (NEA.getFirst nea)
             , test "getFirst from array with multiple elements" <|
@@ -565,7 +565,7 @@ suite =
                 \_ ->
                     let
                         indexedSingletonList =
-                            NEA.singleton ()
+                            NEA.fromElement ()
                                 |> NEA.toIndexedList
                     in
                     Expect.equal (Just ( 0, () )) (List.head indexedSingletonList)
@@ -595,7 +595,7 @@ suite =
                 \_ ->
                     let
                         nea =
-                            NEA.singleton 5
+                            NEA.fromElement 5
                                 |> NEA.map (\x -> x * 2)
                     in
                     Expect.equal 10 (NEA.getFirst nea)
@@ -663,7 +663,7 @@ suite =
                 \_ ->
                     let
                         nea =
-                            NEA.singleton "Hello"
+                            NEA.fromElement "Hello"
                     in
                     Expect.equal "HelloWorld" (NEA.foldl (++) "World" nea)
             , fuzz nonEmptyStringList "foldl array with multiple elements" <|
@@ -689,7 +689,7 @@ suite =
                 \_ ->
                     let
                         nea =
-                            NEA.singleton "Hello"
+                            NEA.fromElement "Hello"
                     in
                     Expect.equal "HelloWorld" (NEA.foldr (++) "World" nea)
             , fuzz nonEmptyStringList "foldr array with multiple elements" <|
@@ -811,6 +811,11 @@ sliceFuzzer1 =
 
 
 -- TODO:
+-- Use initialize/repeat more often and avoid fromList in docs examples (to avoid Maybe)
+-- indexedMap
+-- set up doc tests
+-- getSafe, rolling the index around
+-- toString
 -- Use same order of functions as Array.Hamt
 -- Use same docs as Array.Hamt
 -- currentIndex feature
