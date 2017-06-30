@@ -811,6 +811,7 @@ sliceFuzzer1 =
 
 
 -- TODO:
+-- Set up travis.
 -- Use initialize/repeat more often and avoid fromList in docs examples (to avoid Maybe)
 -- indexedMap
 -- set up doc tests
