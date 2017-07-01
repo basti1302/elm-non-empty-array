@@ -29,7 +29,7 @@ createdFromList = NEA.fromList ["a", "b", "b"]
 
 All functions from core `Array` are available, with the exception of `isEmpty` (which would be an alias for `False`).
 
-In addition, non-empty-array offer additional functions made possible due to the additional constraints:
+In addition, non-empty-array offers additional functions made possible due to the additional constraints:
 
 * `getFirst`: Returns the first element. Since it is known that this element exists, this function does not return a Maybe but the actual element type.
 * `getSelected`: Returns the element at the currently selected index. Since it is known that this element exists, this function does not return a Maybe but the actual element type.
