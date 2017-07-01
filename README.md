@@ -27,7 +27,7 @@ createdFromList : Maybe NonEmptyArray
 createdFromList = NEA.fromList ["a", "b", "b"]
 ````
 
-All functions from core `Array` are available, with the exception of `isEmpty` (which would be an alias for `True`).
+All functions from core `Array` are available, with the exception of `isEmpty` (which would be an alias for `False`).
 
 In addition, non-empty-array offer additional functions made possible due to the additional constraints:
 
