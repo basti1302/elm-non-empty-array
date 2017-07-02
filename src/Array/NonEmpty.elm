@@ -20,6 +20,7 @@ module Array.NonEmpty
         , selectedIndex
         , set
         , setSelectedIndex
+        , setSelectedIndexAndReport
         , slice
         , toArray
         , toIndexedList
@@ -54,12 +55,12 @@ Most functions (like `map`) keep the currently selected index untouched, other f
 
 # Manipulate
 
-@docs set, update, push, append, slice,
+@docs set, update, push, append, slice
 
 
 # Selected Index
 
-@docs setSelectedIndex, selectedIndex, getSelected, updateSelected
+@docs selectedIndex, setSelectedIndex, setSelectedIndexAndReport, getSelected, updateSelected
 
 
 # Conversions
@@ -368,15 +369,45 @@ index is kept).
 
 -}
 setSelectedIndex : Int -> NonEmptyArray a -> NonEmptyArray a
-setSelectedIndex selected nea =
+setSelectedIndex selected =
+    setSelectedIndexAndReport selected >> Tuple.first
+
+
+{-| Set the selected index for the given array and reports if an index change
+actually happened. If the index is out of range, the array is unaltered (that
+is, the old selected index is kept).
+
+The second value of the returned tuple is `True` if and only if the index
+actually changed due to the operation. `False` is returned if you pass in an
+index that is out of range, or when you pass in the index that is currently
+selected anyway.
+
+    initialize 5 identity
+    |> setSelectedIndexAndReport 2
+    |> Tuple.second
+    --> True
+
+    initialize 5 identity
+    |> setSelectedIndexAndReport 7
+    |> Tuple.second
+    --> False
+
+    initialize 5 identity
+    |> setSelectedIndexAndReport 0
+    |> Tuple.second
+    --> False
+
+-}
+setSelectedIndexAndReport : Int -> NonEmptyArray a -> ( NonEmptyArray a, Bool )
+setSelectedIndexAndReport selected nea =
     let
         (NEA first oldSelected rest) =
             nea
     in
     if selected >= 0 && selected < length nea then
-        NEA first selected rest
+        ( NEA first selected rest, selected /= oldSelected )
     else
-        NEA first oldSelected rest
+        ( NEA first oldSelected rest, False )
 
 
 {-| Push an element onto the end of an array.

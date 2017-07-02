@@ -369,7 +369,18 @@ suite =
                     Expect.equal selectedIdx (NEA.getSelected nea)
             ]
         , describe "setSelectedIndex"
-            [ fuzz
+            [ fuzz (Fuzz.intRange 0 9) "index in range is accepted" <|
+                \selectedIdx ->
+                    let
+                        nea =
+                            NEA.initialize 10 identity
+                                |> NEA.setSelectedIndex selectedIdx
+                    in
+                    expectAll
+                        [ Expect.equal selectedIdx (NEA.selectedIndex nea)
+                        , Expect.equal selectedIdx (NEA.getSelected nea)
+                        ]
+            , fuzz
                 (Fuzz.map2 (,)
                     (Fuzz.intRange 0 20)
                     (Fuzz.intRange 20 100)
@@ -397,6 +408,71 @@ suite =
                                 |> NEA.setSelectedIndex selectedIdx
                     in
                     Expect.equal 0 (NEA.selectedIndex nea)
+            ]
+        , describe "setSelectedIndexAndReport"
+            [ fuzz (Fuzz.intRange 1 9)
+                "index in range is accepted and reported as True"
+              <|
+                \selectedIdx ->
+                    let
+                        ( nea, hasChanged ) =
+                            NEA.initialize 10 identity
+                                |> NEA.setSelectedIndexAndReport selectedIdx
+                    in
+                    expectAll
+                        [ Expect.true "should report True" hasChanged
+                        , Expect.equal selectedIdx (NEA.selectedIndex nea)
+                        , Expect.equal selectedIdx (NEA.getSelected nea)
+                        ]
+            , fuzz (Fuzz.intRange 0 9)
+                "report False if given index is already selected"
+              <|
+                \selectedIdx ->
+                    let
+                        ( nea, hasChanged ) =
+                            NEA.initialize 10 identity
+                                |> NEA.setSelectedIndex selectedIdx
+                                |> NEA.setSelectedIndexAndReport selectedIdx
+                    in
+                    expectAll
+                        [ Expect.false "should report False" hasChanged
+                        , Expect.equal selectedIdx (NEA.selectedIndex nea)
+                        , Expect.equal selectedIdx (NEA.getSelected nea)
+                        ]
+            , fuzz
+                (Fuzz.map2 (,)
+                    (Fuzz.intRange 0 20)
+                    (Fuzz.intRange 20 100)
+                )
+                "too large selected index is rejected and reported as False"
+              <|
+                \( size, selectedIdx ) ->
+                    let
+                        ( nea, hasChanged ) =
+                            NEA.initialize size identity
+                                |> NEA.setSelectedIndexAndReport selectedIdx
+                    in
+                    expectAll
+                        [ Expect.false "should report False" hasChanged
+                        , Expect.equal 0 (NEA.selectedIndex nea)
+                        ]
+            , fuzz
+                (Fuzz.map2 (,)
+                    (Fuzz.intRange 0 20)
+                    (Fuzz.intRange -100 -1)
+                )
+                "too low selected index is rejected and reported as False"
+              <|
+                \( size, selectedIdx ) ->
+                    let
+                        ( nea, hasChanged ) =
+                            NEA.initialize size identity
+                                |> NEA.setSelectedIndexAndReport selectedIdx
+                    in
+                    expectAll
+                        [ Expect.false "should report False" hasChanged
+                        , Expect.equal 0 (NEA.selectedIndex nea)
+                        ]
             ]
         , describe "get"
             [ test "get the first element" <|
