@@ -463,6 +463,70 @@ suite =
                     in
                     Expect.equal original updated
             ]
+        , describe "update"
+            [ test "update in range" <|
+                \_ ->
+                    let
+                        nea =
+                            NEA.initialize 3 identity
+                                |> NEA.setSelectedIndex 2
+                                |> NEA.update 1 ((*) 10)
+                    in
+                    expectAll
+                        [ Expect.equal (Just 0) (NEA.get 0 nea)
+                        , Expect.equal (Just 10) (NEA.get 1 nea)
+                        , Expect.equal (Just 2) (NEA.get 2 nea)
+                        , Expect.equal 3 (NEA.length nea)
+                        , Expect.equal 2 (NEA.selectedIndex nea)
+                        ]
+            , fuzz (Fuzz.intRange -10 -1) "update, index too small" <|
+                \idx ->
+                    let
+                        nea =
+                            NEA.initialize 3 identity
+                                |> NEA.setSelectedIndex 2
+                                |> NEA.update idx ((*) 3)
+                    in
+                    expectAll
+                        [ Expect.equal (Just 0) (NEA.get 0 nea)
+                        , Expect.equal (Just 1) (NEA.get 1 nea)
+                        , Expect.equal (Just 2) (NEA.get 2 nea)
+                        , Expect.equal 3 (NEA.length nea)
+                        , Expect.equal 2 (NEA.selectedIndex nea)
+                        ]
+            , fuzz (Fuzz.intRange 3 20) "update, index too high" <|
+                \idx ->
+                    let
+                        nea =
+                            NEA.initialize 3 identity
+                                |> NEA.setSelectedIndex 2
+                                |> NEA.update idx ((*) 3)
+                    in
+                    expectAll
+                        [ Expect.equal (Just 0) (NEA.get 0 nea)
+                        , Expect.equal (Just 1) (NEA.get 1 nea)
+                        , Expect.equal (Just 2) (NEA.get 2 nea)
+                        , Expect.equal 3 (NEA.length nea)
+                        , Expect.equal 2 (NEA.selectedIndex nea)
+                        ]
+            ]
+        , describe "updateSelected"
+            [ test "update the selected element" <|
+                \_ ->
+                    let
+                        nea =
+                            NEA.initialize 3 identity
+                                |> NEA.setSelectedIndex 2
+                                |> NEA.updateSelected ((*) 10)
+                    in
+                    expectAll
+                        [ Expect.equal (Just 0) (NEA.get 0 nea)
+                        , Expect.equal (Just 1) (NEA.get 1 nea)
+                        , Expect.equal (Just 20) (NEA.get 2 nea)
+                        , Expect.equal 3 (NEA.length nea)
+                        , Expect.equal 2 (NEA.selectedIndex nea)
+                        ]
+            ]
         , describe "slice"
             [ fuzz sliceFuzzer1 "start == end -> Nothing" <|
                 \( randomList, index ) ->

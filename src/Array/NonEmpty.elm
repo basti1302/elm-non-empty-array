@@ -25,6 +25,8 @@ module Array.NonEmpty
         , toIndexedList
         , toList
         , toString
+        , update
+        , updateSelected
         )
 
 {-| An array that always contains at least one element.
@@ -47,12 +49,17 @@ Most functions (like `map`) keep the currently selected index untouched, other f
 
 # Query
 
-@docs length, get, getFirst, getSelected, selectedIndex
+@docs length, get, getFirst
 
 
 # Manipulate
 
-@docs set, push, append, slice, setSelectedIndex
+@docs set, update, push, append, slice,
+
+
+# Selected Index
+
+@docs setSelectedIndex, selectedIndex, getSelected, updateSelected
 
 
 # Conversions
@@ -295,6 +302,54 @@ set index element (NEA first selected rest) =
         NEA element selected rest
     else
         NEA first selected (Array.set (index - 1) element rest)
+
+
+{-| Update the element at the given index using a function. Returns the array
+unchanged if the index is out of bounds.
+
+    Just <| update 1 ((+) 10) (initialize 3 identity)
+    --> fromList [0, 11, 2]
+
+    Just <| update 4 ((+) 10) (initialize 3 identity)
+    --> fromList [0, 1, 2]
+
+    Just <| update -1 ((+) 10) (initialize 3 identity)
+    --> fromList [0, 1, 2]
+
+This is basically Array.Extra.update from elm-community/array-extra, for
+NonEmptyArray.
+
+-}
+update : Int -> (a -> a) -> NonEmptyArray a -> NonEmptyArray a
+update index function nea =
+    let
+        element =
+            get index nea
+    in
+    case element of
+        Nothing ->
+            nea
+
+        Just elem ->
+            set index (function elem) nea
+
+
+{-| Update the element at the current selected index using a function.
+
+    Just <| updateSelected ((+) 10) (initialize 3 identity)
+    --> fromList [10, 1, 2]
+
+-}
+updateSelected : (a -> a) -> NonEmptyArray a -> NonEmptyArray a
+updateSelected function nea =
+    let
+        element =
+            getSelected nea
+
+        index =
+            selectedIndex nea
+    in
+    set index (function element) nea
 
 
 {-| Set the selected index for the given array.
