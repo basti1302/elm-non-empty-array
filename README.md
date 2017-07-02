@@ -54,6 +54,7 @@ This will require downloading some packages on the first run.
 
 ## Version History
 
+* 1.2.0 - 2017-07-02: Add update, updateSelected and setSelectedIndexAndReport
 * 1.1.1 - 2017-07-01: Fix typo in README
 * 1.1.0 - 2017-06-30: Selected index feature
 * 1.0.0 - 2017-06-30: Initial version
