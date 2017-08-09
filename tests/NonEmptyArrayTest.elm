@@ -947,6 +947,298 @@ suite =
                         )
                         mnea
             ]
+        , describe "removeAt"
+            [ fuzz nonEmptyIntList "removing at negative index does nothing" <|
+                \randomList ->
+                    let
+                        result =
+                            NEA.fromList randomList
+                                |> Maybe.andThen (NEA.removeAt -1)
+                                |> Maybe.map NEA.toList
+                    in
+                    Expect.equal result (Just randomList)
+            , fuzz nonEmptyIntList "removing at an out of bound index does nothing" <|
+                \randomList ->
+                    let
+                        removeIndex =
+                            List.length randomList
+
+                        result =
+                            NEA.fromList randomList
+                                |> Maybe.andThen (NEA.removeAt removeIndex)
+                                |> Maybe.map NEA.toList
+                    in
+                    Expect.equal result (Just randomList)
+            , test "removing the last element returns Nothing" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ "a" ]
+                                |> Maybe.andThen (NEA.removeAt 0)
+                    in
+                    Expect.equal Nothing mnea
+            , fuzz (Fuzz.intRange 0 1)
+                "removing the second to last returns Just"
+              <|
+                \removeIndex ->
+                    let
+                        mnea =
+                            NEA.fromList [ "a", "b" ]
+                                |> Maybe.andThen (NEA.removeAt removeIndex)
+                    in
+                    expectJust mnea
+            , test "removing the first when there are two" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1 ]
+                                |> Maybe.andThen (NEA.removeAt 0)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal (Just 1) (NEA.get 0 nea)
+                                , Expect.equal Nothing (NEA.get 1 nea)
+                                , Expect.equal 0 (NEA.selectedIndex nea)
+                                ]
+                        )
+                        mnea
+            , test "removing the second when there are two" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1 ]
+                                |> Maybe.andThen (NEA.removeAt 1)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal (Just 0) (NEA.get 0 nea)
+                                , Expect.equal Nothing (NEA.get 1 nea)
+                                , Expect.equal 0 (NEA.selectedIndex nea)
+                                ]
+                        )
+                        mnea
+            , test "removeAt keeps the order" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5 ]
+                                |> Maybe.andThen (NEA.removeAt 3)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal (Just 0) (NEA.get 0 nea)
+                                , Expect.equal (Just 1) (NEA.get 1 nea)
+                                , Expect.equal (Just 2) (NEA.get 2 nea)
+                                , Expect.equal (Just 4) (NEA.get 3 nea)
+                                , Expect.equal (Just 5) (NEA.get 4 nea)
+                                , Expect.equal Nothing (NEA.get 5 nea)
+                                ]
+                        )
+                        mnea
+            , test "removing after the selected index leaves it unchanged" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5 ]
+                                |> Maybe.map (NEA.setSelectedIndex 3)
+                                |> Maybe.andThen (NEA.removeAt 4)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            Expect.equal 3 (NEA.selectedIndex nea)
+                        )
+                        mnea
+            , test "removing the first element updates the selected index " <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5 ]
+                                |> Maybe.map (NEA.setSelectedIndex 4)
+                                |> Maybe.andThen (NEA.removeAt 0)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            Expect.equal 3 (NEA.selectedIndex nea)
+                        )
+                        mnea
+            , test "removing before the selected index updates it" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5 ]
+                                |> Maybe.map (NEA.setSelectedIndex 4)
+                                |> Maybe.andThen (NEA.removeAt 3)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            Expect.equal 3 (NEA.selectedIndex nea)
+                        )
+                        mnea
+            , test "removing at the selected index updates it" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5 ]
+                                |> Maybe.map (NEA.setSelectedIndex 3)
+                                |> Maybe.andThen (NEA.removeAt 3)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            Expect.equal 2 (NEA.selectedIndex nea)
+                        )
+                        mnea
+            ]
+        , describe "removeAtSafe"
+            [ fuzz nonEmptyIntList "removing at negative index does nothing" <|
+                \randomList ->
+                    let
+                        result =
+                            NEA.fromList randomList
+                                |> Maybe.map (NEA.removeAtSafe -1)
+                                |> Maybe.map NEA.toList
+                    in
+                    Expect.equal result (Just randomList)
+            , fuzz nonEmptyIntList "removing at an out of bound index does nothing" <|
+                \randomList ->
+                    let
+                        removeIndex =
+                            List.length randomList
+
+                        result =
+                            NEA.fromList randomList
+                                |> Maybe.map (NEA.removeAtSafe removeIndex)
+                                |> Maybe.map NEA.toList
+                    in
+                    Expect.equal result (Just randomList)
+            , test "removing the last element returns the array unchanged" <|
+                \_ ->
+                    let
+                        result =
+                            NEA.fromList [ "a" ]
+                                |> Maybe.map (NEA.removeAtSafe 0)
+                                |> Maybe.map NEA.toList
+                    in
+                    Expect.equal result (Just [ "a" ])
+            , fuzz
+                (Fuzz.intRange 0 1)
+                "removing the second to last returns a changed array"
+              <|
+                \removeIndex ->
+                    let
+                        mnea =
+                            NEA.fromList [ "a", "b" ]
+                                |> Maybe.map (NEA.removeAtSafe removeIndex)
+                    in
+                    expectMaybe
+                        (\nea -> Expect.equal 1 (NEA.length nea))
+                        mnea
+            , test "removing the first when there are two" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1 ]
+                                |> Maybe.map (NEA.removeAtSafe 0)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal (Just 1) (NEA.get 0 nea)
+                                , Expect.equal Nothing (NEA.get 1 nea)
+                                , Expect.equal 0 (NEA.selectedIndex nea)
+                                ]
+                        )
+                        mnea
+            , test "removing the second when there are two" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1 ]
+                                |> Maybe.map (NEA.removeAtSafe 1)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal (Just 0) (NEA.get 0 nea)
+                                , Expect.equal Nothing (NEA.get 1 nea)
+                                , Expect.equal 0 (NEA.selectedIndex nea)
+                                ]
+                        )
+                        mnea
+            , test "removeAtSafe keeps the order" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5 ]
+                                |> Maybe.map (NEA.removeAtSafe 3)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal (Just 0) (NEA.get 0 nea)
+                                , Expect.equal (Just 1) (NEA.get 1 nea)
+                                , Expect.equal (Just 2) (NEA.get 2 nea)
+                                , Expect.equal (Just 4) (NEA.get 3 nea)
+                                , Expect.equal (Just 5) (NEA.get 4 nea)
+                                , Expect.equal Nothing (NEA.get 5 nea)
+                                ]
+                        )
+                        mnea
+            , test "removing after the selected index leaves it unchanged" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5 ]
+                                |> Maybe.map (NEA.setSelectedIndex 3)
+                                |> Maybe.map (NEA.removeAtSafe 4)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            Expect.equal 3 (NEA.selectedIndex nea)
+                        )
+                        mnea
+            , test "removing the first element updates the selected index " <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5 ]
+                                |> Maybe.map (NEA.setSelectedIndex 4)
+                                |> Maybe.map (NEA.removeAtSafe 0)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            Expect.equal 3 (NEA.selectedIndex nea)
+                        )
+                        mnea
+            , test "removing before the selected index updates it" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5 ]
+                                |> Maybe.map (NEA.setSelectedIndex 4)
+                                |> Maybe.map (NEA.removeAtSafe 3)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            Expect.equal 3 (NEA.selectedIndex nea)
+                        )
+                        mnea
+            , test "removing at the selected index updates it" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2, 3, 4, 5 ]
+                                |> Maybe.map (NEA.setSelectedIndex 3)
+                                |> Maybe.map (NEA.removeAtSafe 3)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            Expect.equal 2 (NEA.selectedIndex nea)
+                        )
+                        mnea
+            ]
         , describe "foldl"
             [ test "foldl singleton" <|
                 \_ ->

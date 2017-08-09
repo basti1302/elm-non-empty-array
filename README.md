@@ -33,6 +33,10 @@ In addition, non-empty-array offers additional functions made possible due to th
 
 * `getFirst`: Returns the first element. Since it is known that this element exists, this function does not return a Maybe but the actual element type.
 * `getSelected`: Returns the element at the currently selected index. Since it is known that this element exists, this function does not return a Maybe but the actual element type.
+* `updateSelected`: Updates the element at the currently selected index.
+
+
+Finally, it offers `update`, `removeAt` and `removeAtSafe`, which are not in core `Array` but inspired by `Array.Extra`.
 
 
 ## Tests

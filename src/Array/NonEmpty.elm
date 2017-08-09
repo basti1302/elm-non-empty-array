@@ -16,6 +16,8 @@ module Array.NonEmpty
         , length
         , map
         , push
+        , removeAt
+        , removeAtSafe
         , repeat
         , selectedIndex
         , set
@@ -55,7 +57,7 @@ Most functions (like `map`) keep the currently selected index untouched, other f
 
 # Manipulate
 
-@docs set, update, push, append, slice
+@docs set, update, push, append, slice, removeAt, removeAtSafe
 
 
 # Selected Index
@@ -701,3 +703,170 @@ normalizeSliceIndex index nea =
         l
     else
         index
+
+
+{-| Removes the element at the given index.
+
+    removeAt 1 (initialize 4 identity) --> fromList [0, 2, 3]
+
+If the index is out of range, the array is returned unchanged. If there is only
+one element in the array and index 0 is passed, Nothing will be returned.
+Otherwise, the element at the given index is removed.
+
+If the removed element was the selected index, the selected index will be set
+to the previous element, or 0 if there is no previous element. Otherwise it will
+be updated so that the same element as before is selected.
+
+-}
+removeAt : Int -> NonEmptyArray a -> Maybe (NonEmptyArray a)
+removeAt index nea =
+    if index < 0 || index > length nea then
+        Just nea
+    else
+        let
+            (NEA first selected rest) =
+                nea
+        in
+        case ( index, Array.isEmpty rest ) of
+            ( 0, True ) ->
+                Nothing
+
+            ( 0, False ) ->
+                fromArray rest
+                    |> Maybe.map (setSelectedIndex (selected - 1))
+
+            otherwise ->
+                let
+                    updatedRest =
+                        arrayExtraRemoveAt (index - 1) rest
+
+                    updatedSelectedIndex =
+                        case compare index selected of
+                            EQ ->
+                                max (selected - 1) 0
+
+                            LT ->
+                                selected - 1
+
+                            GT ->
+                                selected
+                in
+                Just (NEA first updatedSelectedIndex updatedRest)
+
+
+{-| Removes the element at the given index.
+
+    Just (removeAtSafe 1 (initialize 4 identity)) --> fromList [0, 2, 3]
+
+    Just (removeAtSafe 0 (initialize 1 identity)) --> fromList [0]
+
+If the index is out of range, the array is returned unchanged. If there is only
+one element left in the array, the array is also returned unchanged.
+Otherwise, the element at the given index is removed.
+
+If the removed element was the selected index, the selected index will be set
+to the previous element, or 0 if there is no previous element. Otherwise it will
+be updated so that the same element as before is selected.
+
+-}
+removeAtSafe : Int -> NonEmptyArray a -> NonEmptyArray a
+removeAtSafe index nea =
+    if index < 0 || index > length nea then
+        nea
+    else
+        let
+            (NEA first selected rest) =
+                nea
+        in
+        case ( index, Array.isEmpty rest ) of
+            ( 0, True ) ->
+                nea
+
+            ( 0, False ) ->
+                let
+                    newFirst =
+                        let
+                            maybeNewFirst =
+                                Array.get 0 rest
+                        in
+                        case maybeNewFirst of
+                            Just elem ->
+                                elem
+
+                            Nothing ->
+                                -- This really should never happen, see above.
+                                Debug.crash "Expected an element but there is none."
+
+                    restLength =
+                        Array.length rest
+
+                    newSelected =
+                        max (selected - 1) 0
+
+                    newRest =
+                        Array.slice 1 (restLength - 1) rest
+                in
+                NEA newFirst newSelected newRest
+
+            otherwise ->
+                let
+                    updatedRest =
+                        arrayExtraRemoveAt (index - 1) rest
+
+                    updatedSelectedIndex =
+                        case compare index selected of
+                            EQ ->
+                                max (selected - 1) 0
+
+                            LT ->
+                                selected - 1
+
+                            GT ->
+                                selected
+                in
+                NEA first updatedSelectedIndex updatedRest
+
+
+{-| Remove the element at the given index
+-}
+arrayExtraRemoveAt : Int -> Array a -> Array a
+arrayExtraRemoveAt index xs =
+    -- Stolen from
+    -- https://github.com/elm-community/array-extra/blob/1.0.2/src/Array/Extra.elm
+    -- (where this function is known as `removeAt`.
+    let
+        ( xs0, xs1 ) =
+            arrayExtraSplitAt index xs
+
+        len1 =
+            Array.length xs1
+    in
+    if len1 == 0 then
+        xs0
+    else
+        Array.append xs0 (Array.slice 1 len1 xs1)
+
+
+{-| Split an array into two arrays, the first ending at and the second starting at the given index
+-}
+arrayExtraSplitAt : Int -> Array a -> ( Array a, Array a )
+arrayExtraSplitAt index xs =
+    -- Stolen from
+    -- https://github.com/elm-community/array-extra/blob/1.0.2/src/Array/Extra.elm
+    -- (where this function is known as `splitAt`.
+    let
+        len =
+            Array.length xs
+    in
+    case ( index > 0, index < len ) of
+        ( True, True ) ->
+            ( Array.slice 0 index xs, Array.slice index len xs )
+
+        ( True, False ) ->
+            ( xs, Array.empty )
+
+        ( False, True ) ->
+            ( Array.empty, xs )
+
+        ( False, False ) ->
+            ( Array.empty, Array.empty )
