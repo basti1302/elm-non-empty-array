@@ -997,7 +997,8 @@ suite =
                     expectMaybe
                         (\nea ->
                             expectAll
-                                [ Expect.equal (Just 1) (NEA.get 0 nea)
+                                [ Expect.equal 1 (NEA.length nea)
+                                , Expect.equal (Just 1) (NEA.get 0 nea)
                                 , Expect.equal Nothing (NEA.get 1 nea)
                                 , Expect.equal 0 (NEA.selectedIndex nea)
                                 ]
@@ -1013,8 +1014,27 @@ suite =
                     expectMaybe
                         (\nea ->
                             expectAll
-                                [ Expect.equal (Just 0) (NEA.get 0 nea)
+                                [ Expect.equal 1 (NEA.length nea)
+                                , Expect.equal (Just 0) (NEA.get 0 nea)
                                 , Expect.equal Nothing (NEA.get 1 nea)
+                                , Expect.equal 0 (NEA.selectedIndex nea)
+                                ]
+                        )
+                        mnea
+            , test "removing the first when there are three" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 0, 1, 2 ]
+                                |> Maybe.andThen (NEA.removeAt 0)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal 2 (NEA.length nea)
+                                , Expect.equal (Just 1) (NEA.get 0 nea)
+                                , Expect.equal (Just 2) (NEA.get 1 nea)
+                                , Expect.equal Nothing (NEA.get 2 nea)
                                 , Expect.equal 0 (NEA.selectedIndex nea)
                                 ]
                         )
@@ -1145,7 +1165,8 @@ suite =
                     expectMaybe
                         (\nea ->
                             expectAll
-                                [ Expect.equal (Just 1) (NEA.get 0 nea)
+                                [ Expect.equal 1 (NEA.length nea)
+                                , Expect.equal (Just 1) (NEA.get 0 nea)
                                 , Expect.equal Nothing (NEA.get 1 nea)
                                 , Expect.equal 0 (NEA.selectedIndex nea)
                                 ]
@@ -1161,8 +1182,46 @@ suite =
                     expectMaybe
                         (\nea ->
                             expectAll
-                                [ Expect.equal (Just 0) (NEA.get 0 nea)
+                                [ Expect.equal 1 (NEA.length nea)
+                                , Expect.equal (Just 0) (NEA.get 0 nea)
                                 , Expect.equal Nothing (NEA.get 1 nea)
+                                , Expect.equal 0 (NEA.selectedIndex nea)
+                                ]
+                        )
+                        mnea
+            , test "removing the first when there are three" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ "first", "second", "third" ]
+                                |> Maybe.map (NEA.removeAtSafe 0)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal (Just "second") (NEA.get 0 nea)
+                                , Expect.equal (Just "third") (NEA.get 1 nea)
+                                , Expect.equal Nothing (NEA.get 2 nea)
+                                , Expect.equal 2 (NEA.length nea)
+                                , Expect.equal 0 (NEA.selectedIndex nea)
+                                ]
+                        )
+                        mnea
+            , test "removing the first when there are four" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ "first", "second", "third", "four" ]
+                                |> Maybe.map (NEA.removeAtSafe 0)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal (Just "second") (NEA.get 0 nea)
+                                , Expect.equal (Just "third") (NEA.get 1 nea)
+                                , Expect.equal (Just "four") (NEA.get 2 nea)
+                                , Expect.equal Nothing (NEA.get 3 nea)
+                                , Expect.equal 3 (NEA.length nea)
                                 , Expect.equal 0 (NEA.selectedIndex nea)
                                 ]
                         )
