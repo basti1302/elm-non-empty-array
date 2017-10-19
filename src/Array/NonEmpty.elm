@@ -804,7 +804,7 @@ removeAtSafe index nea =
                         max (selected - 1) 0
 
                     newRest =
-                        Array.slice 1 (restLength - 1) rest
+                        Array.slice 1 restLength rest
                 in
                 NEA newFirst newSelected newRest
 
