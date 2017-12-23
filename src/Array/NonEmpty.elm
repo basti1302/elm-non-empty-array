@@ -12,9 +12,11 @@ module Array.NonEmpty
         , getFirst
         , getSelected
         , indexedMap
+        , indexedMapSelected
         , initialize
         , length
         , map
+        , mapSelected
         , push
         , removeAt
         , removeAtSafe
@@ -62,7 +64,7 @@ Most functions (like `map`) keep the currently selected index untouched, other f
 
 # Selected Index
 
-@docs selectedIndex, setSelectedIndex, setSelectedIndexAndReport, getSelected, updateSelected
+@docs selectedIndex, setSelectedIndex, setSelectedIndexAndReport, getSelected, updateSelected, mapSelected, indexedMapSelected
 
 
 # Conversions
@@ -566,6 +568,52 @@ indexedMap function (NEA first selected rest) =
                 rest
     in
     NEA newFirst selected newRest
+
+
+{-| Apply different functions to every element in an array depending on whether
+the element is selected or not.
+
+    Just <|
+      (repeat 5 1
+        |> mapSelected (\isSelected ->
+          if isSelected then
+            (*) 2
+          else
+            Basics.identity
+        ))
+      --> fromList [2, 1, 1, 1, 1]
+
+-}
+mapSelected : (Bool -> a -> b) -> NonEmptyArray a -> NonEmptyArray b
+mapSelected function array =
+    let
+        innerFn index =
+            function (index == selectedIndex array)
+    in
+    indexedMap innerFn array
+
+
+{-| Apply different functions to every element with its index as first argument
+depending on whether the element is selected or not.
+
+    Just <|
+      (repeat 5 1
+        |> indexedMapSelected (\isSelected ->
+          if isSelected then
+            (*)
+          else
+            (+)
+        ))
+      --> fromList [0, 2, 3, 4, 5]
+
+-}
+indexedMapSelected : (Bool -> Int -> a -> b) -> NonEmptyArray a -> NonEmptyArray b
+indexedMapSelected function array =
+    let
+        innerFn index =
+            function (index == selectedIndex array) index
+    in
+    indexedMap innerFn array
 
 
 {-| Append two arrays to a new one.

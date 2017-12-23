@@ -4,7 +4,6 @@ import Array.Hamt as Array exposing (Array)
 import Array.NonEmpty as NEA exposing (NonEmptyArray)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
-import Random
 import Test exposing (..)
 
 
@@ -908,6 +907,51 @@ suite =
                         , Expect.equal Nothing (NEA.get 3 nea)
                         ]
             ]
+        , describe "mapSelected"
+            [ test "mapping over a single element" <|
+                \_ ->
+                    let
+                        nea =
+                            NEA.fromElement 1
+                                |> NEA.mapSelected addFiveOrMultiplyTwo
+                    in
+                    Expect.equal 6 (NEA.getFirst nea)
+            , test "mapping over multiple elements" <|
+                \_ ->
+                    let
+                        mnea =
+                            NEA.fromList [ 1, 2, 3, 4 ]
+                                |> Maybe.map (NEA.mapSelected addFiveOrMultiplyTwo)
+                    in
+                    expectMaybe
+                        (\nea ->
+                            expectAll
+                                [ Expect.equal 4 (NEA.length nea)
+                                , Expect.equal (Just 6) (NEA.get 0 nea)
+                                , Expect.equal (Just 4) (NEA.get 1 nea)
+                                , Expect.equal (Just 6) (NEA.get 2 nea)
+                                , Expect.equal (Just 8) (NEA.get 3 nea)
+                                , Expect.equal Nothing (NEA.get 4 nea)
+                                ]
+                        )
+                        mnea
+            ]
+        , describe "indexedMapSelected"
+            [ test "indexedMapSelected over multiple elements" <|
+                \_ ->
+                    let
+                        nea =
+                            NEA.initialize 3 identity
+                                |> NEA.indexedMapSelected multiplyOrAdd
+                    in
+                    expectAll
+                        [ Expect.equal 3 (NEA.length nea)
+                        , Expect.equal (Just 0) (NEA.get 0 nea)
+                        , Expect.equal (Just 2) (NEA.get 1 nea)
+                        , Expect.equal (Just 4) (NEA.get 2 nea)
+                        , Expect.equal Nothing (NEA.get 3 nea)
+                        ]
+            ]
         , describe "filter"
             [ test "filter to zero elements returns Nothing" <|
                 \_ ->
@@ -1353,6 +1397,14 @@ suite =
         ]
 
 
+addFiveOrMultiplyTwo : Bool -> Int -> Int
+addFiveOrMultiplyTwo isSelected =
+    if isSelected then
+        (+) 5
+    else
+        (*) 2
+
+
 expectJust : Maybe (NonEmptyArray a) -> Expectation
 expectJust maybe =
     case maybe of
@@ -1397,6 +1449,14 @@ isEven x =
 intList : Fuzzer (List Int)
 intList =
     Fuzz.list (Fuzz.intRange 0 1000)
+
+
+multiplyOrAdd : Bool -> Int -> Int -> Int
+multiplyOrAdd isSelected =
+    if isSelected then
+        (*)
+    else
+        (+)
 
 
 nonEmptyIntList : Fuzzer (List Int)
