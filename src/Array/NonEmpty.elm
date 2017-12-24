@@ -74,7 +74,7 @@ Most functions (like `map`) keep the currently selected index untouched, other f
 
 # Transform
 
-@docs foldl, foldr, filter, map, indexedMap
+@docs foldl, foldr, filter, map, indexedMap, mapSelected, indexedMapSelected
 
 
 # Display
@@ -570,8 +570,9 @@ indexedMap function (NEA first selected rest) =
     NEA newFirst selected newRest
 
 
-{-| Apply different functions to every element in an array depending on whether
-the element is selected or not.
+{-| Apply a function to every element in an array. The first argument to that
+function is a Boolean that is True for the selected element. This makes it
+easier to treat the select element different from other elements.
 
     Just <|
       (repeat 5 1
@@ -593,8 +594,10 @@ mapSelected function array =
     indexedMap innerFn array
 
 
-{-| Apply different functions to every element with its index as first argument
-depending on whether the element is selected or not.
+{-| Apply a function to every element in an array. The first argument to that
+function is a Boolean that is True for the selected element. This makes it
+easier to treat the select element different from other elements. The second
+argument is the element's index.
 
     Just <|
       (repeat 5 1
