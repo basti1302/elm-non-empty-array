@@ -36,10 +36,9 @@ module Array.NonEmpty
 
 {-| An array that always contains at least one element.
 
-Additionaly, it can track a currently selected index, which is guaranteed to
-point to an existing element in the array.
+Additionaly, it can track a currently selected index, which is guaranteed to point to an existing element in the array.
 
-Most functions (like `map`) keep the currently selected index untouched, other functions (like `filter` or `slice`) discard the currently selected and reset it to zero. If not otherwise mentioned, the selected index is kept; if it is discard, the function documentation states so explicitly.
+Most functions (like `map`) keep the currently selected index untouched, other functions (like `filter` or `slice`) discard the currently selected and reset it to zero. If not otherwise mentioned, the selected index is kept; if it is discarded, the function documentation states so explicitly.
 
 
 # Non Empty Array
