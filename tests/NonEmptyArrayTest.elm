@@ -1,6 +1,6 @@
-module NonEmptyArrayTest exposing (..)
+module NonEmptyArrayTest exposing (addFiveOrMultiplyTwo, expectAll, expectJust, expectMaybe, intList, isEven, multiplyOrAdd, nonEmptyIntArray, nonEmptyIntList, nonEmptyStringList, sliceFuzzer1, suite)
 
-import Array.Hamt as Array exposing (Array)
+import Array exposing (Array)
 import Array.NonEmpty as NEA exposing (NonEmptyArray)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
@@ -343,7 +343,7 @@ suite =
                     in
                     Expect.equal "element" (NEA.getSelected nea)
             , fuzz
-                (Fuzz.map2 (,)
+                (Fuzz.map2 (\a b -> ( a, b ))
                     (Fuzz.intRange 1 100)
                     (Fuzz.intRange 1 100)
                 )
@@ -356,8 +356,10 @@ suite =
                         ( size, selectedIdx ) =
                             if int1 > int2 then
                                 ( int1, int2 )
+
                             else if int2 > int1 then
                                 ( int2, int1 )
+
                             else
                                 ( int1, int1 - 1 )
 
@@ -380,7 +382,7 @@ suite =
                         , Expect.equal selectedIdx (NEA.getSelected nea)
                         ]
             , fuzz
-                (Fuzz.map2 (,)
+                (Fuzz.map2 (\a b -> ( a, b ))
                     (Fuzz.intRange 0 20)
                     (Fuzz.intRange 20 100)
                 )
@@ -394,7 +396,7 @@ suite =
                     in
                     Expect.equal 0 (NEA.selectedIndex nea)
             , fuzz
-                (Fuzz.map2 (,)
+                (Fuzz.map2 (\a b -> ( a, b ))
                     (Fuzz.intRange 0 20)
                     (Fuzz.intRange -100 -1)
                 )
@@ -439,7 +441,7 @@ suite =
                         , Expect.equal selectedIdx (NEA.getSelected nea)
                         ]
             , fuzz
-                (Fuzz.map2 (,)
+                (Fuzz.map2 (\a b -> ( a, b ))
                     (Fuzz.intRange 0 20)
                     (Fuzz.intRange 20 100)
                 )
@@ -456,7 +458,7 @@ suite =
                         , Expect.equal 0 (NEA.selectedIndex nea)
                         ]
             , fuzz
-                (Fuzz.map2 (,)
+                (Fuzz.map2 (\a b -> ( a, b ))
                     (Fuzz.intRange 0 20)
                     (Fuzz.intRange -100 -1)
                 )
@@ -679,6 +681,7 @@ suite =
                                 -- slice -1 0 is (correctly) the empty array,
                                 -- for this case we need slice -1 4
                                 4
+
                             else
                                 start + 1
 
@@ -784,7 +787,7 @@ suite =
                         )
                         mnea
             , fuzz
-                (Fuzz.map2 (,)
+                (Fuzz.map2 (\a b -> ( a, b ))
                     (Fuzz.intRange -7 -5)
                     (Fuzz.intRange -4 -1)
                 )
@@ -897,7 +900,7 @@ suite =
                     let
                         nea =
                             NEA.initialize 3 identity
-                                |> NEA.indexedMap (,)
+                                |> NEA.indexedMap (\a b -> ( a, b ))
                     in
                     expectAll
                         [ Expect.equal 3 (NEA.length nea)
@@ -1401,6 +1404,7 @@ addFiveOrMultiplyTwo : Bool -> Int -> Int
 addFiveOrMultiplyTwo isSelected =
     if isSelected then
         (+) 5
+
     else
         (*) 2
 
@@ -1443,7 +1447,7 @@ expectAll expectations =
 
 isEven : Int -> Bool
 isEven x =
-    x % 2 == 0
+    modBy 2 x == 0
 
 
 intList : Fuzzer (List Int)
@@ -1455,6 +1459,7 @@ multiplyOrAdd : Bool -> Int -> Int -> Int
 multiplyOrAdd isSelected =
     if isSelected then
         (*)
+
     else
         (+)
 
@@ -1505,5 +1510,5 @@ sliceFuzzer1 =
                     indexFuzzer =
                         Fuzz.intRange 0 maxIndex
                 in
-                Fuzz.map2 (,) listFuzzer indexFuzzer
+                Fuzz.map2 (\a b -> ( a, b )) listFuzzer indexFuzzer
             )
