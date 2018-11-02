@@ -1,38 +1,12 @@
-module Array.NonEmpty
-    exposing
-        ( NonEmptyArray
-        , append
-        , filter
-        , foldl
-        , foldr
-        , fromArray
-        , fromElement
-        , fromList
-        , get
-        , getFirst
-        , getSelected
-        , indexedMap
-        , indexedMapSelected
-        , initialize
-        , length
-        , map
-        , mapSelected
-        , push
-        , removeAt
-        , removeAtSafe
-        , repeat
-        , selectedIndex
-        , set
-        , setSelectedIndex
-        , setSelectedIndexAndReport
-        , slice
-        , toArray
-        , toIndexedList
-        , toList
-        , toString
-        , update
-        , updateSelected
-        )
+module Array.NonEmpty exposing
+    ( NonEmptyArray
+    , fromElement, initialize, repeat, fromList, fromArray
+    , length, get, getFirst
+    , set, update, push, append, slice, removeAt, removeAtSafe
+    , selectedIndex, setSelectedIndex, setSelectedIndexAndReport, getSelected, updateSelected, mapSelected, indexedMapSelected
+    , toArray, toList, toIndexedList
+    , foldl, foldr, filter, map, indexedMap
+    )
 
 {-| An array that always contains at least one element.
 
@@ -82,7 +56,7 @@ Most functions (like `map`) keep the currently selected index untouched, other f
 
 -}
 
-import Array.Hamt as Array exposing (Array)
+import Array exposing (Array)
 
 
 {-| An array that is known, at compile-time, to be non empty. It always has at
@@ -113,13 +87,13 @@ the element at index `i` initialized to the result of `(f i)`.
 When the requested number of elements is smaller than one (0 or negative), the
 returned array will still contain one element, `f 0`.
 
-    Just (initialize 4 identity)    --> fromList [0, 1, 2, 3]
+    Just (initialize 4 identity) --> fromList [0, 1, 2, 3]
 
-    Just (initialize 4 (\n -> n*n)) --> fromList [0, 1, 4, 9]
+    Just (initialize 4 (\n -> n * n)) --> fromList [0, 1, 4, 9]
 
-    Just (initialize 4 (always 0))  --> fromList [0, 0, 0, 0]
+    Just (initialize 4 (always 0)) --> fromList [0, 0, 0, 0]
 
-    Just (initialize 0 identity)  --> fromList [0]
+    Just (initialize 0 identity) --> fromList [0]
 
 The selected index of the resulting array will be 0.
 
@@ -140,7 +114,7 @@ initialize howMany generator =
 When the requested number of elements is smaller than one (0 or negative),
 this function will still return a non empty array with one element.
 
-    Just (repeat 5 0)     --> fromList [0, 0, 0, 0, 0]
+    Just (repeat 5 0) --> fromList [0, 0, 0, 0, 0]
 
     Just (repeat 3 "cat") --> fromList ["cat", "cat", "cat"]
 
@@ -171,12 +145,12 @@ fromArray array =
         maybeFirst =
             Array.get 0 array
 
-        length =
+        length_ =
             Array.length array
     in
     case maybeFirst of
         Just first ->
-            Array.slice 1 (length + 1) array
+            Array.slice 1 (length_ + 1) array
                 |> NEA first 0
                 |> Just
 
@@ -198,37 +172,14 @@ fromList =
     Array.fromList >> fromArray
 
 
-{-| Return a representation of the NonEmptyArray as a string. The number in
-parantheses after the list of elements is the selected index.
-
-    import Array.NonEmpty as NEA
-
-    NEA.toString <| (initialize 3 identity) --> "NonEmptyArray [0,1,2] (0)"
-
--}
-toString : NonEmptyArray a -> String
-toString nea =
-    let
-        (NEA first selected rest) =
-            nea
-
-        content =
-            nea
-                |> map Basics.toString
-                |> toList
-                |> String.join ","
-    in
-    "NonEmptyArray [" ++ content ++ "] (" ++ Basics.toString selected ++ ")"
-
-
 {-| Return `Just` the element at the index or `Nothing` if the index is out of
 range.
 
-    get  0 (initialize 3 identity) --> Just 0
+    get 0 (initialize 3 identity) --> Just 0
 
-    get  2 (initialize 3 identity) --> Just 2
+    get 2 (initialize 3 identity) --> Just 2
 
-    get  5 (initialize 3 identity) --> Nothing
+    get 5 (initialize 3 identity) --> Nothing
 
     get -1 (initialize 3 identity) -->  Nothing
 
@@ -242,6 +193,7 @@ get : Int -> NonEmptyArray a -> Maybe a
 get index (NEA first _ rest) =
     if index == 0 then
         Just first
+
     else
         Array.get (index - 1) rest
 
@@ -267,7 +219,7 @@ getFirst (NEA first _ rest) =
 getSelected : NonEmptyArray a -> a
 getSelected nea =
     let
-        (NEA _ selected _) =
+        (NEA first selected _) =
             nea
 
         elem =
@@ -278,7 +230,10 @@ getSelected nea =
             e
 
         Nothing ->
-            Debug.crash ("Invalid selected index: " ++ toString nea)
+            {- This should never happen, see above.
+               But to avoid Debug.crash, we return first
+            -}
+            first
 
 
 {-| Return the selected index.
@@ -304,6 +259,7 @@ set : Int -> a -> NonEmptyArray a -> NonEmptyArray a
 set index element (NEA first selected rest) =
     if index == 0 then
         NEA element selected rest
+
     else
         NEA first selected (Array.set (index - 1) element rest)
 
@@ -409,6 +365,7 @@ setSelectedIndexAndReport selected nea =
     in
     if selected >= 0 && selected < length nea then
         ( NEA first selected rest, selected /= oldSelected )
+
     else
         ( NEA first oldSelected rest, False )
 
@@ -425,7 +382,7 @@ push element (NEA first selected rest) =
 
 {-| Converts the NonEmptyArray into a standard array.
 
-    import Array.Hamt as Array
+    import Array
 
     fromArray (Array.fromList [1, 2])
         |> Maybe.map toArray
@@ -507,7 +464,7 @@ Nothing is returned, otherwise Just the array of remaining elements.
 
     isEven : Int -> Bool
     isEven n =
-        n % 2 == 0
+        Basics.modBy 2 n == 0
 
     filter isEven (initialize 5 identity) --> fromList [0, 2, 4]
 
@@ -527,13 +484,14 @@ filter function (NEA first _ rest) =
     in
     if retainFirst then
         Just (NEA first 0 filteredRest)
+
     else
         fromArray filteredRest
 
 
 {-| Apply a function to every element in an array.
 
-    map Basics.toString (repeat 5 1) --> repeat 5 "1"
+    map Debug.toString (repeat 5 1) --> repeat 5 "1"
 
 -}
 map : (a -> b) -> NonEmptyArray a -> NonEmptyArray b
@@ -632,7 +590,7 @@ append (NEA first1 selected1 rest1) (NEA first2 _ rest2) =
         newRest =
             rest1
                 |> Array.push first2
-                |> flip Array.append rest2
+                |> (\a -> Array.append a rest2)
     in
     NEA first1 selected1 newRest
 
@@ -651,9 +609,9 @@ that indicates the end of the slice. The slice extracts up to but not including
 Both the `start` and `end` indexes can be negative, indicating an offset from
 the end of the array.
 
-    slice  1 -1 (initialize 5 identity) --> fromList [1, 2, 3]
+    slice 1 -1 (initialize 5 identity) --> fromList [1, 2, 3]
 
-    slice -2  5 (initialize 5 identity) --> fromList [3, 4]
+    slice -2 5 (initialize 5 identity) --> fromList [3, 4]
 
 This makes it pretty easy to `pop` the last element off of an array:
 `slice 0 -1 array`
@@ -683,8 +641,10 @@ slice startIndex endIndex nea =
     -- end = start + n for n >= 1 => n elements, starting at start
     if s >= e then
         Nothing
+
     else if s >= l then
         Nothing
+
     else
         -- At this point, the following conditions are true:
         -- * 0 <= s < length
@@ -698,6 +658,7 @@ slice startIndex endIndex nea =
                     -- This is the easy case, for s == 0 the slice's first
                     -- element is the current first element.
                     first
+
                 else
                     -- otherwise, we need to fetch the slice's first element
                     -- from the rest array. We know that the element at the
@@ -713,12 +674,15 @@ slice startIndex endIndex nea =
                             elem
 
                         Nothing ->
-                            -- This really should never happen, see above.
-                            Debug.crash "Expected an element but there is none."
+                            {- This should never happen, see above.
+                               But to avoid Debug.crash, we return first
+                            -}
+                            first
 
             newRest =
                 if e > s + 1 then
                     Array.slice s (e - 1) rest
+
                 else
                     Array.empty
         in
@@ -747,10 +711,13 @@ normalizeSliceIndex index nea =
     in
     if index < 0 && fromRight < 0 then
         0
+
     else if index < 0 then
         fromRight
+
     else if index > l then
         l
+
     else
         index
 
@@ -772,6 +739,7 @@ removeAt : Int -> NonEmptyArray a -> Maybe (NonEmptyArray a)
 removeAt index nea =
     if index < 0 || index > length nea then
         Just nea
+
     else
         let
             (NEA first selected rest) =
@@ -823,6 +791,7 @@ removeAtSafe : Int -> NonEmptyArray a -> NonEmptyArray a
 removeAtSafe index nea =
     if index < 0 || index > length nea then
         nea
+
     else
         let
             (NEA first selected rest) =
@@ -844,8 +813,10 @@ removeAtSafe index nea =
                                 elem
 
                             Nothing ->
-                                -- This really should never happen, see above.
-                                Debug.crash "Expected an element but there is none."
+                                {- This should never happen, see above.
+                                   But to avoid Debug.crash, we return first
+                                -}
+                                first
 
                     restLength =
                         Array.length rest
@@ -893,6 +864,7 @@ arrayExtraRemoveAt index xs =
     in
     if len1 == 0 then
         xs0
+
     else
         Array.append xs0 (Array.slice 1 len1 xs1)
 
