@@ -9,8 +9,6 @@ point to an existing element in the array.
 These additional constraints enables two functions, namely `getFirst` and
 `getSelected` to return a value directly instead of a `Maybe`.
 
-The implementation uses [Skinney/elm-array-exploration](http://package.elm-lang.org/packages/Skinney/elm-array-exploration/latest) internally (which will be the default Array implementation in Elm core from version 0.19 on). For Elm 0.18, `Skinney/elm-array-exploration` is the only dependency besides `elm-lang/core`. For Elm 0.19, `elm-lang/core` will be the only dependency.
-
 Inspired by [mgold/elm-nonempty-list](http://package.elm-lang.org/packages/mgold/elm-nonempty-list/latest).
 
 ````elm
@@ -58,6 +56,7 @@ This will require downloading some packages on the first run.
 
 ## Version History
 
+* 2.0.0 - 2018-11-18: Update for Elm 0.19 (all credits go to Ignacio Gutierrez(@devnacho))
 * 1.4.0 - 2017-12-24: Add mapSelected and indexedMapSelected ([#2](https://github.com/basti1302/elm-non-empty-array/issues/2), [#3](https://github.com/basti1302/elm-non-empty-array/pull/3), thanks to @cjduncana).
 * 1.3.1 - 2017-10-19: Fix [#1](https://github.com/basti1302/elm-non-empty-array/issues/1) (removeSafeAt removes last element)
 * 1.3.0 - 2017-08-09: Add removeAt, removeSafeAt

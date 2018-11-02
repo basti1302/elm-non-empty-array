@@ -1,6 +1,6 @@
-module NonEmptyArrayTest exposing (..)
+module NonEmptyArrayTest exposing (suite)
 
-import Array.Hamt as Array exposing (Array)
+import Array exposing (Array)
 import Array.NonEmpty as NEA exposing (NonEmptyArray)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
@@ -59,7 +59,7 @@ suite =
                 \howMany ->
                     let
                         nea =
-                            NEA.initialize howMany toString
+                            NEA.initialize howMany Debug.toString
                     in
                     expectAll
                         [ Expect.equal howMany (NEA.length nea)
@@ -73,7 +73,7 @@ suite =
                 \howMany ->
                     let
                         nea =
-                            NEA.initialize howMany toString
+                            NEA.initialize howMany Debug.toString
                     in
                     expectAll
                         [ Expect.equal 1 (NEA.length nea)
@@ -151,23 +151,6 @@ suite =
                             Expect.equal 0 (NEA.selectedIndex nea)
                         )
                         mnea
-            ]
-        , describe "toString"
-            [ test "render to string" <|
-                \_ ->
-                    let
-                        nea =
-                            NEA.initialize 3 identity
-                    in
-                    Expect.equal "NonEmptyArray [0,1,2] (0)" (NEA.toString nea)
-            , test "render to string with different selected index" <|
-                \_ ->
-                    let
-                        nea =
-                            NEA.repeat 3 0
-                                |> NEA.setSelectedIndex 1
-                    in
-                    Expect.equal "NonEmptyArray [0,0,0] (1)" (NEA.toString nea)
             ]
         , describe "push"
             [ test "push to singleton" <|
@@ -343,7 +326,7 @@ suite =
                     in
                     Expect.equal "element" (NEA.getSelected nea)
             , fuzz
-                (Fuzz.map2 (,)
+                (Fuzz.map2 Tuple.pair
                     (Fuzz.intRange 1 100)
                     (Fuzz.intRange 1 100)
                 )
@@ -356,8 +339,10 @@ suite =
                         ( size, selectedIdx ) =
                             if int1 > int2 then
                                 ( int1, int2 )
+
                             else if int2 > int1 then
                                 ( int2, int1 )
+
                             else
                                 ( int1, int1 - 1 )
 
@@ -380,7 +365,7 @@ suite =
                         , Expect.equal selectedIdx (NEA.getSelected nea)
                         ]
             , fuzz
-                (Fuzz.map2 (,)
+                (Fuzz.map2 Tuple.pair
                     (Fuzz.intRange 0 20)
                     (Fuzz.intRange 20 100)
                 )
@@ -394,7 +379,7 @@ suite =
                     in
                     Expect.equal 0 (NEA.selectedIndex nea)
             , fuzz
-                (Fuzz.map2 (,)
+                (Fuzz.map2 Tuple.pair
                     (Fuzz.intRange 0 20)
                     (Fuzz.intRange -100 -1)
                 )
@@ -439,7 +424,7 @@ suite =
                         , Expect.equal selectedIdx (NEA.getSelected nea)
                         ]
             , fuzz
-                (Fuzz.map2 (,)
+                (Fuzz.map2 Tuple.pair
                     (Fuzz.intRange 0 20)
                     (Fuzz.intRange 20 100)
                 )
@@ -456,7 +441,7 @@ suite =
                         , Expect.equal 0 (NEA.selectedIndex nea)
                         ]
             , fuzz
-                (Fuzz.map2 (,)
+                (Fuzz.map2 Tuple.pair
                     (Fuzz.intRange 0 20)
                     (Fuzz.intRange -100 -1)
                 )
@@ -679,6 +664,7 @@ suite =
                                 -- slice -1 0 is (correctly) the empty array,
                                 -- for this case we need slice -1 4
                                 4
+
                             else
                                 start + 1
 
@@ -784,7 +770,7 @@ suite =
                         )
                         mnea
             , fuzz
-                (Fuzz.map2 (,)
+                (Fuzz.map2 Tuple.pair
                     (Fuzz.intRange -7 -5)
                     (Fuzz.intRange -4 -1)
                 )
@@ -897,7 +883,7 @@ suite =
                     let
                         nea =
                             NEA.initialize 3 identity
-                                |> NEA.indexedMap (,)
+                                |> NEA.indexedMap Tuple.pair
                     in
                     expectAll
                         [ Expect.equal 3 (NEA.length nea)
@@ -1401,6 +1387,7 @@ addFiveOrMultiplyTwo : Bool -> Int -> Int
 addFiveOrMultiplyTwo isSelected =
     if isSelected then
         (+) 5
+
     else
         (*) 2
 
@@ -1443,7 +1430,7 @@ expectAll expectations =
 
 isEven : Int -> Bool
 isEven x =
-    x % 2 == 0
+    modBy 2 x == 0
 
 
 intList : Fuzzer (List Int)
@@ -1455,30 +1442,32 @@ multiplyOrAdd : Bool -> Int -> Int -> Int
 multiplyOrAdd isSelected =
     if isSelected then
         (*)
+
     else
         (+)
 
 
 nonEmptyIntList : Fuzzer (List Int)
 nonEmptyIntList =
-    intList
-        |> Fuzz.conditional
-            { retries = 10
-            , fallback = \_ -> [ 42 ]
-            , condition = List.isEmpty >> not
-            }
+    ( intList, Fuzz.int )
+        |> Fuzz.tuple
+        |> Fuzz.map notEmpty
 
 
 nonEmptyStringList : Fuzzer (List String)
 nonEmptyStringList =
-    Fuzz.intRange 0 1000
-        |> Fuzz.map toString
+    Fuzz.string
         |> Fuzz.list
-        |> Fuzz.conditional
-            { retries = 10
-            , fallback = \_ -> [ "42" ]
-            , condition = List.isEmpty >> not
-            }
+        |> Fuzz.map (\list -> notEmpty ( list, "fallback" ))
+
+
+notEmpty : ( List a, a ) -> List a
+notEmpty ( list, fallback ) =
+    if List.isEmpty list then
+        [ fallback ]
+
+    else
+        list
 
 
 nonEmptyIntArray : Fuzzer (Array Int)
@@ -1491,19 +1480,17 @@ nonEmptyIntArray =
 -}
 sliceFuzzer1 : Fuzzer ( List Int, Int )
 sliceFuzzer1 =
-    let
-        listFuzzer =
-            nonEmptyIntList
-    in
-    listFuzzer
-        |> Fuzz.andThen
-            (\randomList ->
-                let
-                    maxIndex =
-                        List.length randomList - 1
+    ( nonEmptyIntList, Fuzz.intRange 0 5, Fuzz.intRange 0 5 )
+        |> Fuzz.tuple3
+        |> Fuzz.map
+            (\( list, idx1, idx2 ) ->
+                case ( idx1 < List.length list, idx2 < List.length list ) of
+                    ( True, _ ) ->
+                        ( list, idx1 )
 
-                    indexFuzzer =
-                        Fuzz.intRange 0 maxIndex
-                in
-                Fuzz.map2 (,) listFuzzer indexFuzzer
+                    ( False, True ) ->
+                        ( list, List.length list - idx2 )
+
+                    ( False, False ) ->
+                        ( list, List.length list - 1 )
             )
