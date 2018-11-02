@@ -671,8 +671,10 @@ slice startIndex endIndex nea =
                             elem
 
                         Nothing ->
-                            -- This really should never happen, see above.
-                            Debug.crash "Expected an element but there is none."
+                            {- This should never happen, see above.
+                            But to avoid Debug.crash, we return Nothing
+                             -}
+                            Nothing
 
             newRest =
                 if e > s + 1 then
