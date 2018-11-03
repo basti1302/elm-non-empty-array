@@ -219,7 +219,7 @@ getFirst (NEA first _ rest) =
 getSelected : NonEmptyArray a -> a
 getSelected nea =
     let
-        (NEA _ selected _) =
+        (NEA first selected _) =
             nea
 
         elem =
@@ -230,7 +230,10 @@ getSelected nea =
             e
 
         Nothing ->
-            Debug.crash ("Invalid selected index: " ++ Debug.toString nea)
+            {- This should never happen, see above.
+            But to avoid Debug.crash, we return first
+             -}
+            first
 
 
 {-| Return the selected index.
@@ -672,9 +675,9 @@ slice startIndex endIndex nea =
 
                         Nothing ->
                             {- This should never happen, see above.
-                            But to avoid Debug.crash, we return Nothing
+                            But to avoid Debug.crash, we return first
                              -}
-                            Nothing
+                            first
 
             newRest =
                 if e > s + 1 then
@@ -810,8 +813,10 @@ removeAtSafe index nea =
                                 elem
 
                             Nothing ->
-                                -- This really should never happen, see above.
-                                Debug.crash "Expected an element but there is none."
+                                {- This should never happen, see above.
+                                But to avoid Debug.crash, we return first
+                                 -}
+                                first
 
                     restLength =
                         Array.length rest
