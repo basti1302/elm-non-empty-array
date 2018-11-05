@@ -722,7 +722,7 @@ normalizeSliceIndex index nea =
         index
 
 
-{-| (Removes the element at the given index.
+{-| Removes the element at the given index.
 
     removeAt 1 (initialize 4 identity) --> fromList [0, 2, 3]
 
