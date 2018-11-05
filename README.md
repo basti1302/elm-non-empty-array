@@ -9,8 +9,6 @@ point to an existing element in the array.
 These additional constraints enables two functions, namely `getFirst` and
 `getSelected` to return a value directly instead of a `Maybe`.
 
-The implementation uses [Skinney/elm-array-exploration](http://package.elm-lang.org/packages/Skinney/elm-array-exploration/latest) internally (which will be the default Array implementation in Elm core from version 0.19 on). For Elm 0.18, `Skinney/elm-array-exploration` is the only dependency besides `elm-lang/core`. For Elm 0.19, `elm-lang/core` will be the only dependency.
-
 Inspired by [mgold/elm-nonempty-list](http://package.elm-lang.org/packages/mgold/elm-nonempty-list/latest).
 
 ````elm
