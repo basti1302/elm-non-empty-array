@@ -231,8 +231,8 @@ getSelected nea =
 
         Nothing ->
             {- This should never happen, see above.
-            But to avoid Debug.crash, we return first
-             -}
+               But to avoid Debug.crash, we return first
+            -}
             first
 
 
@@ -675,8 +675,8 @@ slice startIndex endIndex nea =
 
                         Nothing ->
                             {- This should never happen, see above.
-                            But to avoid Debug.crash, we return first
-                             -}
+                               But to avoid Debug.crash, we return first
+                            -}
                             first
 
             newRest =
@@ -814,8 +814,8 @@ removeAtSafe index nea =
 
                             Nothing ->
                                 {- This should never happen, see above.
-                                But to avoid Debug.crash, we return first
-                                 -}
+                                   But to avoid Debug.crash, we return first
+                                -}
                                 first
 
                     restLength =
