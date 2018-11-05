@@ -343,7 +343,7 @@ suite =
                     in
                     Expect.equal "element" (NEA.getSelected nea)
             , fuzz
-                (Fuzz.map2 (\a b -> ( a, b ))
+                (Fuzz.map2 Tuple.pair
                     (Fuzz.intRange 1 100)
                     (Fuzz.intRange 1 100)
                 )
@@ -382,7 +382,7 @@ suite =
                         , Expect.equal selectedIdx (NEA.getSelected nea)
                         ]
             , fuzz
-                (Fuzz.map2 (\a b -> ( a, b ))
+                (Fuzz.map2 Tuple.pair
                     (Fuzz.intRange 0 20)
                     (Fuzz.intRange 20 100)
                 )
@@ -396,7 +396,7 @@ suite =
                     in
                     Expect.equal 0 (NEA.selectedIndex nea)
             , fuzz
-                (Fuzz.map2 (\a b -> ( a, b ))
+                (Fuzz.map2 Tuple.pair
                     (Fuzz.intRange 0 20)
                     (Fuzz.intRange -100 -1)
                 )
@@ -441,7 +441,7 @@ suite =
                         , Expect.equal selectedIdx (NEA.getSelected nea)
                         ]
             , fuzz
-                (Fuzz.map2 (\a b -> ( a, b ))
+                (Fuzz.map2 Tuple.pair
                     (Fuzz.intRange 0 20)
                     (Fuzz.intRange 20 100)
                 )
@@ -458,7 +458,7 @@ suite =
                         , Expect.equal 0 (NEA.selectedIndex nea)
                         ]
             , fuzz
-                (Fuzz.map2 (\a b -> ( a, b ))
+                (Fuzz.map2 Tuple.pair
                     (Fuzz.intRange 0 20)
                     (Fuzz.intRange -100 -1)
                 )
@@ -787,7 +787,7 @@ suite =
                         )
                         mnea
             , fuzz
-                (Fuzz.map2 (\a b -> ( a, b ))
+                (Fuzz.map2 Tuple.pair
                     (Fuzz.intRange -7 -5)
                     (Fuzz.intRange -4 -1)
                 )
@@ -900,7 +900,7 @@ suite =
                     let
                         nea =
                             NEA.initialize 3 identity
-                                |> NEA.indexedMap (\a b -> ( a, b ))
+                                |> NEA.indexedMap Tuple.pair
                     in
                     expectAll
                         [ Expect.equal 3 (NEA.length nea)
@@ -1510,5 +1510,5 @@ sliceFuzzer1 =
                     indexFuzzer =
                         Fuzz.intRange 0 maxIndex
                 in
-                Fuzz.map2 (\a b -> ( a, b )) listFuzzer indexFuzzer
+                Fuzz.map2 Tuple.pair listFuzzer indexFuzzer
             )
