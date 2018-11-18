@@ -6,7 +6,7 @@ An array that always contains at least one element.
 Additionaly, it can track a currently selected index, which is guaranteed to
 point to an existing element in the array.
 
-These additional constraints enables two functions, namely `getFirst` and
+These additional constraints enable two functions, namely `getFirst` and
 `getSelected` to return a value directly instead of a `Maybe`.
 
 Inspired by [mgold/elm-nonempty-list](http://package.elm-lang.org/packages/mgold/elm-nonempty-list/latest).
