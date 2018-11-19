@@ -4,6 +4,8 @@ import Array exposing (Array)
 import Array.NonEmpty as NEA exposing (NonEmptyArray)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
+import Json.Decode as Decode
+import Json.Encode as Encode
 import Test exposing (..)
 
 
@@ -1379,6 +1381,107 @@ suite =
                             Expect.equal foldedViaList nea
                         )
                         foldedViaNea
+            ]
+        , describe "decode"
+            [ test "decode empty" <|
+                \_ ->
+                    let
+                        result =
+                            Decode.decodeString (NEA.decoder Decode.string) "[]"
+
+                        expectedFailure =
+                            Decode.Failure "Cannot decode an empty JSON array to a NonEmptyArray." (Encode.string "")
+
+                        expectedError =
+                            Err expectedFailure
+                    in
+                    Expect.equal expectedError result
+            , test "decode single element" <|
+                \_ ->
+                    let
+                        result =
+                            Decode.decodeString (NEA.decoder Decode.string) "[\"Ohai!\"]"
+
+                        expected =
+                            Ok <| NEA.fromElement "Ohai!"
+                    in
+                    Expect.equal expected result
+            , test "decode multiple elements" <|
+                \_ ->
+                    let
+                        result =
+                            Decode.decodeString (NEA.decoder Decode.string) "[\"Ohai!\", \"more\", \"elements\"]"
+                                |> Result.toMaybe
+
+                        expected =
+                            NEA.fromList [ "Ohai!", "more", "elements" ]
+                    in
+                    Expect.equal expected result
+            ]
+        , describe "decode with default"
+            [ test "decode empty" <|
+                \_ ->
+                    let
+                        result =
+                            Decode.decodeString (NEA.decoderWithDefault Decode.string "default") "[]"
+
+                        expected =
+                            Ok <| NEA.fromElement "default"
+                    in
+                    Expect.equal expected result
+            , test "decode single element" <|
+                \_ ->
+                    let
+                        result =
+                            Decode.decodeString (NEA.decoderWithDefault Decode.string "default") "[\"Ohai!\"]"
+
+                        expected =
+                            Ok <| NEA.fromElement "Ohai!"
+                    in
+                    Expect.equal expected result
+            , test "decode multiple elements" <|
+                \_ ->
+                    let
+                        result =
+                            Decode.decodeString
+                                (NEA.decoderWithDefault
+                                    Decode.string
+                                    "default"
+                                )
+                                "[\"Ohai!\", \"more\", \"elements\"]"
+                                |> Result.toMaybe
+
+                        expected =
+                            NEA.fromList [ "Ohai!", "more", "elements" ]
+                    in
+                    Expect.equal expected result
+            ]
+        , describe "encode"
+            [ test "encode single element" <|
+                \_ ->
+                    let
+                        result =
+                            NEA.fromElement "Ohai!"
+                                |> NEA.encode Encode.string
+                                |> Encode.encode 0
+
+                        expected =
+                            "[\"Ohai!\"]"
+                    in
+                    Expect.equal expected result
+            , test "encode multiple elements" <|
+                \_ ->
+                    let
+                        result =
+                            NEA.fromElement "Hello"
+                                |> NEA.push "World"
+                                |> NEA.encode Encode.string
+                                |> Encode.encode 0
+
+                        expected =
+                            "[\"Hello\",\"World\"]"
+                    in
+                    Expect.equal expected result
             ]
         ]
 

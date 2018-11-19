@@ -6,6 +6,7 @@ module Array.NonEmpty exposing
     , selectedIndex, setSelectedIndex, setSelectedIndexAndReport, getSelected, updateSelected, mapSelected, indexedMapSelected
     , toArray, toList, toIndexedList
     , foldl, foldr, filter, map, indexedMap
+    , decoder, decoderWithDefault, encode
     )
 
 {-| An array that always contains at least one element.
@@ -49,9 +50,16 @@ Most functions (like `map`) keep the currently selected index untouched, other f
 
 @docs foldl, foldr, filter, map, indexedMap
 
+
+# JSON Decoding/Encoding
+
+@docs decoder, decoderWithDefault, encode
+
 -}
 
 import Array exposing (Array)
+import Json.Decode as Decode exposing (Decoder)
+import Json.Encode as Encode exposing (Value)
 
 
 {-| An array that is known, at compile-time, to be non empty. It always has at
@@ -887,3 +895,43 @@ arrayExtraSplitAt index xs =
 
         ( False, False ) ->
             ( Array.empty, Array.empty )
+
+
+{-| Decodes a JSON array into a `NonEmptyArray`. Produces a `Decode.fail` for an empty JSON array.
+-}
+decoder : Decoder a -> Decoder (NonEmptyArray a)
+decoder elementDecoder =
+    Decode.fail "Cannot decode an empty JSON array to a NonEmptyArray."
+        |> decoderBase elementDecoder
+
+
+{-| Decodes a JSON array into a `NonEmptyArray`. Returns a `NonEmptyArray` with the given default value as its only element when decoding an empty JSON array.
+-}
+decoderWithDefault : Decoder a -> a -> Decoder (NonEmptyArray a)
+decoderWithDefault elementDecoder default =
+    fromElement default
+        |> Decode.succeed
+        |> decoderBase elementDecoder
+
+
+{-| Decodes a JSON array into a `NonEmptyArray`. Returns the provided fallback decoder when decoding an empty JSON array.
+-}
+decoderBase : Decoder a -> Decoder (NonEmptyArray a) -> Decoder (NonEmptyArray a)
+decoderBase elementDecoder fallback =
+    Decode.list elementDecoder
+        |> Decode.andThen
+            (\list ->
+                case fromList list of
+                    Just nea ->
+                        Decode.succeed nea
+
+                    Nothing ->
+                        fallback
+            )
+
+
+{-| Turns a `NonEmptyArray` into a JSON array. Each element will be encoded with the provided encoding function.
+-}
+encode : (a -> Value) -> NonEmptyArray a -> Value
+encode encodeElement nea =
+    Encode.list encodeElement <| toList nea
