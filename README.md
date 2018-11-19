@@ -56,6 +56,7 @@ This will require downloading some packages on the first run.
 
 ## Version History
 
+* 2.1.0 - 2018-11-19: Add functions for JSON decoding/encoding
 * 2.0.0 - 2018-11-18: Update for Elm 0.19 (all credits go to Ignacio Gutierrez(@devnacho))
 * 1.4.0 - 2017-12-24: Add mapSelected and indexedMapSelected ([#2](https://github.com/basti1302/elm-non-empty-array/issues/2), [#3](https://github.com/basti1302/elm-non-empty-array/pull/3), thanks to @cjduncana).
 * 1.3.1 - 2017-10-19: Fix [#1](https://github.com/basti1302/elm-non-empty-array/issues/1) (removeSafeAt removes last element)
