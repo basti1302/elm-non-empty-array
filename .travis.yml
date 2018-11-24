@@ -31,3 +31,4 @@ install:
 
 script:
   - elm-verify-examples && elm-test
+  - elm diff
